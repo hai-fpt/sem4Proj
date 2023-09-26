@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/lms
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        transaction:
+          manager_lookup_class: org.hibernate.transaction.JBossTransactionManagerLookup
+      transaction:
+        manager-id: java:jboss/TransactionManager
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: "73440768880-n6qrafg7tln8hvc2aj8t2lkf74r29kra.apps.googleusercontent.com"
+
+server:
+  port: 9000
