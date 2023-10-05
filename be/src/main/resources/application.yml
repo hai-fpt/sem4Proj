@@ -30,7 +30,7 @@ spring:
     host: smtp.gmail.com
     port: 587
     username: hainvhth2108031@fpt.edu.vn
-    password: aqba otrj dlui boor
+    password: 
     properties:
       mail:
         smtp:
