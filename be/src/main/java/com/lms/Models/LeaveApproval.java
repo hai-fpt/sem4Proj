@@ -1,10 +1,15 @@
-package com.example.lms.Models;
+package com.lms.Models;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.Date;
 
 @Entity
 @Table(name = "leave_approval")
+@Getter
+@Setter
 public class LeaveApproval {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,7 +22,7 @@ public class LeaveApproval {
     @Column(name = "manager_id")
     private String managerId;
 
-    //Status: 0: Pending, 1: Approved, 2: Rejected
+    //Status: 1: Pending, 2: Approved, 3: Rejected
     private Integer status;
 
     @Column(name = "created_date", nullable = false, updatable = false)
@@ -43,59 +48,4 @@ public class LeaveApproval {
         this.status = 0;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public UserLeave getUserLeave() {
-        return userLeave;
-    }
-
-    public void setUserLeave(UserLeave userLeave) {
-        this.userLeave = userLeave;
-    }
-
-    public String getManagerId() {
-        return managerId;
-    }
-
-    public void setManagerId(String managerId) {
-        this.managerId = managerId;
-    }
-
-    public Integer getStatus() {
-        return status;
-    }
-
-    public void setStatus(Integer status) {
-        this.status = status;
-    }
-
-    public Date getCreatedDate() {
-        return createdDate;
-    }
-
-    public void setCreatedDate(Date createdDate) {
-        this.createdDate = createdDate;
-    }
-
-    public Date getUpdatedDate() {
-        return updatedDate;
-    }
-
-    public void setUpdatedDate(Date updatedDate) {
-        this.updatedDate = updatedDate;
-    }
-
-    public String getUpdatedBy() {
-        return updatedBy;
-    }
-
-    public void setUpdatedBy(String updatedBy) {
-        this.updatedBy = updatedBy;
-    }
 }

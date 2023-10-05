@@ -1,14 +1,12 @@
-package com.example.lms.Controller;
+package com.lms.Controller;
 
-import com.example.lms.DTO.UserDTO;
-import com.example.lms.Models.User;
-import com.example.lms.Service.UserServiceImpl;
+import com.lms.DTO.UserDTO;
+import com.lms.Models.User;
+import com.lms.Security.TokenVerifier;
+import com.lms.Service.UserServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/login")
@@ -21,8 +19,26 @@ public class Login {
 
     @PostMapping
     public ResponseEntity<User> loginCreate(@RequestBody UserDTO user) {
+        //if user exist
         user.setRank(UserDTO.RankEnum.EMPLOYEE);
         User newUser = userServiceImpl.createUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
     }
+    @GetMapping
+    public ResponseEntity<String> accessWithToken(@RequestHeader("Authorization") String authorizationHeader) {
+        String token = extractJwtToken(authorizationHeader);
+        if (token != null && TokenVerifier.verifyJwt(token)) {
+            return ResponseEntity.ok("ok");
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
+
+    private String extractJwtToken(String token) {
+        if (token != null && token.startsWith("Bearer ")) {
+            return token.substring(7);
+        }
+        return null;
+    }
+
 }

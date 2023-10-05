@@ -1,13 +1,15 @@
-package com.example.lms.Service;
+package com.lms.Service;
 
-import com.example.lms.DTO.TeamDTO;
-import com.example.lms.Models.Team;
+import com.lms.DTO.TeamDTO;
+import com.lms.Models.Team;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface TeamService {
-    List<Team> getAllTeams();
+    //    List<Team> getAllTeams();
+    Page<Team> getAllTeams(Pageable pageable);
 
     Optional<Team> findTeamById(Long id);
 

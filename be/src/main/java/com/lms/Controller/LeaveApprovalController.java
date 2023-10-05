@@ -1,8 +1,8 @@
-package com.example.lms.Controller;
+package com.lms.Controller;
 
-import com.example.lms.DTO.LeaveApprovalDTO;
-import com.example.lms.Models.LeaveApproval;
-import com.example.lms.Service.LeaveApprovalServiceImpl;
+import com.lms.DTO.LeaveApprovalDTO;
+import com.lms.Models.LeaveApproval;
+import com.lms.Service.LeaveApprovalServiceImpl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

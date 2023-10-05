@@ -1,12 +1,12 @@
-package com.example.lms.Repository;
+package com.lms.Repository;
 
-import com.example.lms.Models.LeaveApproval;
+import com.lms.Models.LeaveApproval;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
 public interface LeaveApprovalRepository extends JpaRepository<LeaveApproval, Long> {
-    List<LeaveApproval> findByUserLeave_Id(Long id);
+    Page<LeaveApproval> findByUserLeave_Id(Long id, Pageable pageable);
 }

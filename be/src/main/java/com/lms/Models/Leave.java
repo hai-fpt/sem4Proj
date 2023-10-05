@@ -1,4 +1,7 @@
-package com.example.lms.Models;
+package com.lms.Models;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -7,6 +10,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "leave")
+@Getter
+@Setter
 public class Leave {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,60 +34,4 @@ public class Leave {
 
     @OneToMany(mappedBy = "leave")
     private List<UserLeave> userLeaves = new ArrayList<>();
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Date getCreatedDate() {
-        return createdDate;
-    }
-
-    public void setCreatedDate(Date createdDate) {
-        this.createdDate = createdDate;
-    }
-
-    public Date getUpdatedDate() {
-        return updatedDate;
-    }
-
-    public void setUpdatedDate(Date updatedDate) {
-        this.updatedDate = updatedDate;
-    }
-
-    public String getUpdatedBy() {
-        return updatedBy;
-    }
-
-    public void setUpdatedBy(String updatedBy) {
-        this.updatedBy = updatedBy;
-    }
-
-    public List<UserLeave> getUserLeaves() {
-        return userLeaves;
-    }
-
-    public void setUserLeaves(List<UserLeave> userLeaves) {
-        this.userLeaves = userLeaves;
-    }
 }

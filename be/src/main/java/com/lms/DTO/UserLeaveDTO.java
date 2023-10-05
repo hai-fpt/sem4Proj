@@ -1,7 +1,7 @@
-package com.example.lms.DTO;
+package com.lms.DTO;
 
-import com.example.lms.Models.Leave;
-import com.example.lms.Models.User;
+import com.lms.Models.Leave;
+import com.lms.Models.User;
 
 import java.util.Date;
 import java.util.List;

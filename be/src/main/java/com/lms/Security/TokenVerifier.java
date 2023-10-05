@@ -1,4 +1,4 @@
-package com.example.lms.Security;
+package com.lms.Security;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -6,21 +6,21 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.Date;
 
 public class TokenVerifier {
-    @Value("${spring.security.oauth2.client.registration.google.client-id}")
-    private static String GOOGLE_CLIENT_ID;
+    //TODO: MOVE THE SECRET THINGS INTO APPLICATION.YML OR ENV LATER
+    private static String GOOGLE_CLIENT_ID = "647930186322-oolledhdbl5578p2kgcfq290re8jgi8c.apps.googleusercontent.com";
 
 
     public static ResponseEntity<String> verifyToken(String jwtToken) {
@@ -46,6 +46,7 @@ public class TokenVerifier {
         }
     }
 
+    static SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     private static String createJwt(String email, String userId) {
         long currentTimeMillis = System.currentTimeMillis();
         long expirationTime = currentTimeMillis + (60 * 60 * 1000);
@@ -54,8 +55,27 @@ public class TokenVerifier {
                 .setId(userId)
                 .setIssuedAt(new Date(currentTimeMillis))
                 .setExpiration(new Date(expirationTime))
-                .signWith(Keys.secretKeyFor(SignatureAlgorithm.HS256))
+                .signWith(secretKey)
                 .compact();
         return jwt;
+    }
+
+    public static boolean verifyJwt(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+            Date expirationDate = claims.getExpiration();
+            Date currentDate = new Date();
+            if (expirationDate.before(currentDate)) {
+                throw new ExpiredJwtException(null, null, "JWT Token has expired");
+            }
+            return true;
+        } catch (JwtException e) {
+            System.out.println(e);
+            return false;
+        }
     }
 }

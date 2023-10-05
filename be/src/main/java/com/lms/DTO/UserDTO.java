@@ -1,10 +1,9 @@
-package com.example.lms.DTO;
+package com.lms.DTO;
 
-import com.example.lms.Models.Team;
+import com.lms.Models.Team;
+import com.lms.Models.UserRole;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class UserDTO {
 
@@ -49,11 +48,15 @@ public class UserDTO {
 
     private Date updatedDate;
 
+    private String updatedBy;
+
     private String experience_date;
 
     private String working_time;
 
     private Set<Team> teams = new HashSet<>();
+
+    private List<UserRole> userRoles = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -191,6 +194,14 @@ public class UserDTO {
         this.updatedDate = updatedDate;
     }
 
+    public String getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(String updatedBy) {
+        this.updatedBy = updatedBy;
+    }
+
     public String getExperience_date() {
         return experience_date;
     }
@@ -213,5 +224,13 @@ public class UserDTO {
 
     public void setTeams(Set<Team> teams) {
         this.teams = teams;
+    }
+
+    public List<UserRole> getUserRoles() {
+        return userRoles;
+    }
+
+    public void setUserRoles(List<UserRole> userRoles) {
+        this.userRoles = userRoles;
     }
 }

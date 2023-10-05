@@ -1,10 +1,7 @@
-package com.example.lms.Service;
+package com.lms.Service;
 
-import com.example.lms.DTO.UserLeaveDTO;
-import com.example.lms.Models.LeaveApproval;
-import com.example.lms.Models.UserLeave;
-
-import java.util.List;
+import com.lms.DTO.UserLeaveDTO;
+import com.lms.Models.UserLeave;
 
 public interface UserLeaveService {
     UserLeave createUserLeave(UserLeaveDTO userLeaveDTO);

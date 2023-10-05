@@ -1,18 +1,21 @@
-package com.example.lms.Controller;
+package com.lms.Controller;
 
-import com.example.lms.DTO.DateRangeDTO;
-import com.example.lms.DTO.UserDTO;
-import com.example.lms.Models.User;
-import com.example.lms.Service.UserServiceImpl;
+import com.lms.DTO.DateRangeDTO;
+import com.lms.DTO.UserDTO;
+import com.lms.Models.User;
+import com.lms.Models.UserTeam;
+import com.lms.Service.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api")
@@ -25,34 +28,30 @@ public class UserController {
     }
 
     @GetMapping("/user")
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userServiceImpl.getAllUsers();
+    public ResponseEntity<Page<User>> getAllUsers(@PageableDefault(page = 0, size = 10) Pageable pageable) {
+        Page<User> users = userServiceImpl.getAllUsers(pageable);
         return ResponseEntity.ok(users);
     }
 
     @GetMapping("/user/{id}")
     public ResponseEntity<User> getUserById(@PathVariable("id") Long id) {
-        Optional<User> user = userServiceImpl.getUserById(id);
-        if (user.isPresent()) {
-            User foundUser = user.get();
-            Date currentDate = new Date();
-            Date gradDate = foundUser.getCreatedDate();
-            Date joinDate = foundUser.getJoined_date();
-
-            long expDate = currentDate.getTime() - gradDate.getTime();
-            int expYears = (int) (expDate / (1000L * 60 * 60 * 24 * 365));
-            int expMonths = (int) ((expDate % (1000L * 60 * 60 * 24 * 365)) / (1000L * 60 * 60 * 24 * 30));
-            foundUser.setExperience_date(expYears + " Years, " + expMonths + " Months");
-
-            long workDate = currentDate.getTime() - joinDate.getTime();
-            int workYears = (int) (workDate / (1000L * 60 * 60 * 24 * 365));
-            int workMonths = (int) ((workDate % (1000L * 60 * 60 * 24 * 365)) / (1000L * 60 * 60 * 24 * 30));
-            foundUser.setWorking_time(workYears + " Years, " + workMonths + " Months");
-
-            return ResponseEntity.ok(foundUser);
-        }
-        return ResponseEntity.notFound().build();
-    }
+		Optional<User> user = userServiceImpl.getUserById(id);
+		if (user.isPresent()) {
+			User foundUser = user.get();
+			if (foundUser.getJoined_date() != null) {
+				Period workingTimes = Period.between(new java.sql.Date(foundUser.getJoined_date().getTime()).toLocalDate(), LocalDate.now());
+				//TODO should return 2 fields depends (workingYear, workingMonth)
+				foundUser.setWorking_time(workingTimes.getYears() + " Years, " + workingTimes.getMonths() + " Months");
+			}
+			if (foundUser.getUniversity_graduate_date() != null) {
+				Period experienceTimes = Period.between(new java.sql.Date(foundUser.getUniversity_graduate_date().getTime()).toLocalDate(), LocalDate.now());
+				//TODO should return 2 fields depends (expYear, expMonth)
+				foundUser.setExperience_date(experienceTimes.getYears() + " Years, " + experienceTimes.getMonths() + " Months");
+			}
+			return ResponseEntity.ok(foundUser);
+		}
+		return ResponseEntity.notFound().build();
+	}
 
 //    @GetMapping("/user/teams/{team}")
 //    public ResponseEntity<List<User>> getUserByTeam(@PathVariable("team") String teamName) {
@@ -67,13 +66,26 @@ public class UserController {
 //    }
 
     @GetMapping("/user/user-between-dates")
-    public ResponseEntity<List<User>> getUserBetweenDates(@RequestBody DateRangeDTO dateRange) {
-        List<User> users = userServiceImpl.getUserBetweenDates(dateRange.getStartDate(), dateRange.getEndDate());
+    public ResponseEntity<Page<User>> getUserBetweenDates(@RequestBody DateRangeDTO dateRange, @PageableDefault(size = 10)Pageable pageable) {
+        Page<User> users = userServiceImpl.getUserBetweenDates(dateRange.getStartDate(), dateRange.getEndDate(), pageable);
+        return ResponseEntity.ok(users);
+    }
+
+    @GetMapping("/user/team")
+    public ResponseEntity<Page<UserTeam>> getUserTeam(@RequestBody UserDTO userDTO, @PageableDefault(size = 10)Pageable pageable) {
+        Page<UserTeam> userTeams = userServiceImpl.getUserTeamByUser(userDTO, pageable);
+        return ResponseEntity.ok(userTeams);
+    }
+
+    @GetMapping("/user/role")
+    public ResponseEntity<Page<User>> getUserByRole(@RequestBody UserDTO userDTO, Pageable pageable) {
+        Page<User> users = userServiceImpl.getUserByRole(userDTO, pageable);
         return ResponseEntity.ok(users);
     }
 
     @PostMapping("/user")
     public ResponseEntity<User> createUser(@RequestBody UserDTO user) {
+        user.setRank(UserDTO.RankEnum.EMPLOYEE);
         User newUser = userServiceImpl.createUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
     }

@@ -1,4 +1,4 @@
-package com.example.lms.Security;
+package com.lms.Security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

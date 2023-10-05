@@ -1,15 +1,17 @@
-package com.example.lms.Service;
+package com.lms.Service;
 
-import com.example.lms.DTO.TeamDTO;
-import com.example.lms.Models.Team;
-import com.example.lms.Models.User;
-import com.example.lms.Models.UserTeam;
-import com.example.lms.Repository.TeamRepository;
-import com.example.lms.Repository.UserRepository;
-import com.example.lms.Repository.UserTeamRepository;
+import com.lms.DTO.TeamDTO;
+import com.lms.Models.Team;
+import com.lms.Models.User;
+import com.lms.Models.UserTeam;
+import com.lms.Repository.TeamRepository;
+import com.lms.Repository.UserRepository;
+import com.lms.Repository.UserTeamRepository;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -30,8 +32,8 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public List<Team> getAllTeams() {
-        return teamRepository.findAll();
+    public Page<Team> getAllTeams(Pageable pageable) {
+        return teamRepository.findAll(pageable);
     }
     @Override
     public Optional<Team> findTeamById(Long id) {
@@ -75,7 +77,7 @@ public class TeamServiceImpl implements TeamService {
             modelMapper.addMappings(new PropertyMap<TeamDTO, Team>() {
                 @Override
                 protected void configure() {
-                    map().setUser(manager);
+                    map().setManager(manager);
                 }
             });
             Team team = modelMapper.map(teamDTO, Team.class);

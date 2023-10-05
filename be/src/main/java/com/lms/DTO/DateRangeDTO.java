@@ -1,4 +1,4 @@
-package com.example.lms.DTO;
+package com.lms.DTO;
 
 import java.util.Date;
 

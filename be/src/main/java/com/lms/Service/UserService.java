@@ -1,24 +1,33 @@
-package com.example.lms.Service;
+package com.lms.Service;
 
-import com.example.lms.DTO.UserDTO;
-import com.example.lms.Models.User;
+import com.lms.DTO.RoleDTO;
+import com.lms.DTO.UserDTO;
+import com.lms.Models.User;
+import com.lms.Models.UserTeam;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public interface UserService {
-    List<User> getAllUsers();
+    Page<User> getAllUsers(Pageable pageable);
 
     Optional<User> getUserById(Long id);
 
+    Page<User> getUserBetweenDates(Date starDate, Date endDate, Pageable pageable);
 
-    List<User> getUserBetweenDates(Date starDate, Date endDate);
+    Page<UserTeam> getUserTeamByUser(UserDTO userDTO, Pageable pageable);
+
+    Page<User> getUserByRole(UserDTO userDTO, Pageable pageable);
 
     User createUser(UserDTO user);
 
     User updateUser(UserDTO user);
 
     void deleteUser(Long id);
+
+    void addUserRole(UserDTO userDTO, RoleDTO roleDTO);
+
+    void removeUserRole(UserDTO userDTO, RoleDTO roleDTO);
 }

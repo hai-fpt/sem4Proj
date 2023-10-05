@@ -1,10 +1,10 @@
-package com.example.lms.Service;
+package com.lms.Service;
 
-import com.example.lms.DTO.UserLeaveDTO;
-import com.example.lms.Models.LeaveApproval;
-import com.example.lms.Models.UserLeave;
-import com.example.lms.Repository.LeaveApprovalRepository;
-import com.example.lms.Repository.UserLeaveRepository;
+import com.lms.DTO.UserLeaveDTO;
+import com.lms.Models.LeaveApproval;
+import com.lms.Models.UserLeave;
+import com.lms.Repository.LeaveApprovalRepository;
+import com.lms.Repository.UserLeaveRepository;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.springframework.stereotype.Service;
