@@ -24,6 +24,22 @@ spring:
         registration:
           google:
             client-id: "73440768880-n6qrafg7tln8hvc2aj8t2lkf74r29kra.apps.googleusercontent.com"
+  
+  mail:
+    default-encoding: UTF-8
+    host: smtp.gmail.com
+    port: 587
+    username: hainvhth2108031@fpt.edu.vn
+    password: aqba otrj dlui boor
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+        debug: true
+    protocol: smtp
+    test-connection: false
 
 server:
   port: 9000
