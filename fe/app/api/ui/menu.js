@@ -48,37 +48,50 @@ module.exports = [
     icon: "view_list",
     link: "/app/pages/leave/my",
   },
-
   {
-    key: "pages",
-    name: "Pages",
+    key: "system_information",
+    name: "System information",
     icon: "important_devices",
     child: [
       {
-        key: "blank",
-        name: "Blank Page",
-        icon: "video_label",
-        link: "/app",
-      },
-
-      // {
-      //   key: 'dashboard',
-      //   name: 'Dashboard',
-      //   icon: 'settings_brightness',
-      //   link: '/app/pages/dashboard'
-      // },
-      {
-        key: "forms",
-        name: "Form",
-        link: "/app/pages/form",
-        icon: "ballot",
-      },
-      {
-        key: "tables",
-        name: "Table",
-        icon: "grid_on",
-        link: "/app/pages/table",
+        key: "holiday_list",
+        name: "Holidays",
+        icon: "insert_chart",
+        link: "/app/pages/holidays",
       },
     ],
   },
+
+  // {
+  //   key: "pages",
+  //   name: "Pages",
+  //   icon: "important_devices",
+  //   child: [
+  //     {
+  //       key: "blank",
+  //       name: "Blank Page",
+  //       icon: "video_label",
+  //       link: "/app",
+  //     },
+
+  //     // {
+  //     //   key: 'dashboard',
+  //     //   name: 'Dashboard',
+  //     //   icon: 'settings_brightness',
+  //     //   link: '/app/pages/dashboard'
+  //     // },
+  //     {
+  //       key: "forms",
+  //       name: "Form",
+  //       link: "/app/pages/form",
+  //       icon: "ballot",
+  //     },
+  //     {
+  //       key: "tables",
+  //       name: "Table",
+  //       icon: "grid_on",
+  //       link: "/app/pages/table",
+  //     },
+  //   ],
+  // },
 ];

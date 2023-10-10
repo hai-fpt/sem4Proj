@@ -10,6 +10,7 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import ListSubheader from '@material-ui/core/ListSubheader';
+import Typography from "@material-ui/core/Typography";
 import Collapse from '@material-ui/core/Collapse';
 import Chip from '@material-ui/core/Chip';
 import Icon from '@material-ui/core/Icon';
@@ -37,6 +38,7 @@ function MainMenu(props) {
     loadTransition(false);
   };
 
+
   const getMenus = menuArray => menuArray.map((item, index) => {
     if (item.child || item.linkParent) {
       return (
@@ -59,7 +61,11 @@ function MainMenu(props) {
                 <Icon>{item.icon}</Icon>
               </ListItemIcon>
             )}
-            <ListItemText classes={{ primary: classes.primary }} primary={item.name} />
+            <ListItemText classes={{ primary: classes.primary }} primaryTypographyProps={{ className: classes.primary }}>
+              <Typography variant="body1" style={{ fontSize: '14px' }}>
+                {item.name}
+              </Typography>
+            </ListItemText>
             { !item.linkParent && (
               <span>
                 { open.indexOf(item.key) > -1 ? <ExpandLess /> : <ExpandMore /> }
@@ -70,14 +76,13 @@ function MainMenu(props) {
             <Collapse
               component="div"
               className={classNames(
-                classes.nolist,
                 (item.keyParent ? classes.child : ''),
               )}
               in={open.indexOf(item.key) > -1}
               timeout="auto"
               unmountOnExit
             >
-              <List className={classes.dense} component="nav" dense>
+              <List className={classes.head} component="nav">
                 { getMenus(item.child, 'key') }
               </List>
             </Collapse>
@@ -102,13 +107,22 @@ function MainMenu(props) {
         key={index.toString()}
         button
         exact
-        className={classes.nested}
+        className={classes.head}
         activeClassName={classes.active}
         component={LinkBtn}
         to={item.link}
         onClick={() => handleClick()}
-      >
-        <ListItemText classes={{ primary: classes.primary }} primary={item.name} />
+      > 
+        {item.icon && (
+              <ListItemIcon className={classes.icon}>
+                <Icon>{item.icon}</Icon>
+              </ListItemIcon>
+        )}
+        <ListItemText classes={{ primary: classes.primary }}>
+          <Typography variant="body1" style={{ fontSize: '14px' }}>
+            {item.name}
+          </Typography>
+        </ListItemText>
         {item.badge && (
           <Chip color="primary" label={item.badge} className={classes.badge} />
         )}
