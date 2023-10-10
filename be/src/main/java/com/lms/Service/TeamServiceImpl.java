@@ -1,12 +1,13 @@
-package com.lms.Service;
+package com.lms.service;
 
-import com.lms.DTO.TeamDTO;
-import com.lms.Models.Team;
-import com.lms.Models.User;
-import com.lms.Models.UserTeam;
-import com.lms.Repository.TeamRepository;
-import com.lms.Repository.UserRepository;
-import com.lms.Repository.UserTeamRepository;
+import com.lms.dto.TeamDTO;
+import com.lms.dto.TeamLeadDTO;
+import com.lms.models.Team;
+import com.lms.models.User;
+import com.lms.models.UserTeam;
+import com.lms.repository.TeamRepository;
+import com.lms.repository.UserRepository;
+import com.lms.repository.UserTeamRepository;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,63 +41,64 @@ public class TeamServiceImpl implements TeamService {
         return teamRepository.findById(id);
     }
 
-//    @Override
-//    public List<String> getTeamLeadByUser(Long id) {
-//        Optional<User> userOptional = userRepository.findById(id);
-//        if (userOptional.isPresent()) {
-//            User user = userOptional.get();
-//            List<UserTeam> userTeams = user.getUserTeams();
-//            List<String> teamLeads = new ArrayList<>();
-//            if (!userTeams.isEmpty()) {
-//                for (UserTeam userTeam : userTeams) {
-//                    teamLeads.add(userTeam.getTeam().getTeamLead());
-//                }
-//                return teamLeads;
-//            }
-//            return Collections.emptyList();
-//        }
-//        return Collections.emptyList();
-//    }
     @Override
     public Team findTeamByName(String name) {
         return teamRepository.findTeamByteamName(name);
     }
 
-    //    @Override
-//    public Team createTeam(TeamDTO team) {
-//        ModelMapper modelMapper = new ModelMapper();
-//        Team teamEntity = modelMapper.map(team, Team.class);
-//        return teamRepository.save(teamEntity);
-//    }
     @Override
     public Team createTeam(TeamDTO teamDTO) {
         ModelMapper modelMapper = new ModelMapper();
         Optional<User> user = userRepository.findById(teamDTO.getManagerId());
-        if (user.isPresent()) {
-            User manager = user.get();
-            modelMapper.addMappings(new PropertyMap<TeamDTO, Team>() {
-                @Override
-                protected void configure() {
-                    map().setManager(manager);
-                }
-            });
-            Team team = modelMapper.map(teamDTO, Team.class);
-            teamRepository.save(team);
-            List<Long> userList = teamDTO.getUserList();
-            for (Long userId : userList) {
-                Optional<User> userEmployee = userRepository.findById(userId);
-                if (userEmployee.isPresent()) {
-                    UserTeam userTeam = new UserTeam(userEmployee.get(), team);
-                    userTeamRepository.save(userTeam);
-                }
+        User manager = user.get();
+        modelMapper.addMappings(new PropertyMap<TeamDTO, Team>() {
+            @Override
+            protected void configure() {
+                map().setManager(manager);
+                map().setUpdated_by(teamDTO.getRequestedByEmail());
             }
-            return team;
+        });
+        Team team = modelMapper.map(teamDTO, Team.class);
+        teamRepository.save(team);
+
+        List<Long> userList = teamDTO.getUserList();
+        List<User> users = userRepository.findAllById(userList);
+        if (userList.size() != users.size()) {
+            throw new NullPointerException("Missing user");
         }
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Manager not found");
+
+        List<UserTeam> userTeams = new ArrayList<>();
+        for (User user1 : users) {
+            UserTeam userTeam = new UserTeam(user1, team);
+            userTeams.add(userTeam);
+        }
+
+        userTeamRepository.saveAll(userTeams);
+        return team;
+    }
+
+    @Override
+    public List<User> getTeamManagers() {
+        List<Team> teams = teamRepository.findAll();
+        if (teams.isEmpty()) {
+            throw new NullPointerException("No team managers available");
+        }
+        List<User> managers = new ArrayList<>();
+        for (Team team : teams) {
+            if (team.getManager() != null)
+                managers.add(team.getManager());
+        }
+        return managers;
     }
     @Override
     public Team updateTeam(TeamDTO team) {
         ModelMapper modelMapper = new ModelMapper();
+        modelMapper.addMappings(new PropertyMap<TeamDTO, Team>() {
+            @Override
+            protected void configure() {
+                map().setUpdated_by(team.getRequestedByEmail());
+            }
+        });
         Team teamEntity = modelMapper.map(team, Team.class);
         return teamRepository.save(teamEntity);
     }

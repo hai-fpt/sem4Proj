@@ -1,6 +1,8 @@
-package com.lms.Models;
+package com.lms.models;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
@@ -10,10 +12,9 @@ import javax.persistence.*;
 @Table(name = "user_role")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserRole {
-    public UserRole() {
-
-    }
     @EmbeddedId
     private UserRoleKey id;
     @ManyToOne(fetch = FetchType.LAZY)

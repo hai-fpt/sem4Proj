@@ -1,6 +1,8 @@
-package com.lms.Models;
+package com.lms.models;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
@@ -10,6 +12,8 @@ import java.util.Date;
 @Table(name = "user_team")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserTeam {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,9 +38,6 @@ public class UserTeam {
     @Column(name = "updated_by")
     private String updatedBy;
 
-    public UserTeam() {
-
-    }
     public UserTeam(User user, Team team) {
         this.user = user;
         this.team = team;
@@ -45,5 +46,6 @@ public class UserTeam {
     @PrePersist
     private void createdDatePre() {
         this.createdDate = new Date();
+        this.updatedDate = new Date();
     }
 }

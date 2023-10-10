@@ -1,13 +1,13 @@
-package com.lms.Service;
+package com.lms.service;
 
-import com.lms.DTO.RoleDTO;
-import com.lms.Models.Role;
-import com.lms.Repository.RoleRepository;
+import com.lms.dto.RoleDTO;
+import com.lms.models.Role;
+import com.lms.repository.RoleRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -21,8 +21,8 @@ public class RoleServiceImpl implements RoleService{
     }
 
     @Override
-    public List<Role> getAllRoles() {
-        return roleRepository.findAll();
+    public Page<Role> getAllRoles(Pageable pageable) {
+        return roleRepository.findAll(pageable);
     }
 
     @Override

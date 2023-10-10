@@ -1,12 +1,14 @@
-package com.lms.Controller;
+package com.lms.controller;
 
-import com.lms.DTO.UserDTO;
-import com.lms.Models.User;
-import com.lms.Security.TokenVerifier;
-import com.lms.Service.UserServiceImpl;
+import com.lms.dto.UserDTO;
+import com.lms.models.User;
+import com.lms.security.TokenVerifier;
+import com.lms.service.UserServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/login")
@@ -19,7 +21,10 @@ public class Login {
 
     @PostMapping
     public ResponseEntity<User> loginCreate(@RequestBody UserDTO user) {
-        //if user exist
+        Optional<User> existingUser = userServiceImpl.getUserByEmail(user.getEmail());
+        if (existingUser.isPresent()) {
+            return ResponseEntity.ok().build();
+        }
         user.setRank(UserDTO.RankEnum.EMPLOYEE);
         User newUser = userServiceImpl.createUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(newUser);

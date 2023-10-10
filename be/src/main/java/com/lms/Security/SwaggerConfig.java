@@ -1,4 +1,4 @@
-package com.lms.Security;
+package com.lms.security;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;

@@ -1,12 +1,15 @@
-package com.lms.Service;
+package com.lms.service;
 
-import com.lms.DTO.LeaveApprovalDTO;
-import com.lms.Models.LeaveApproval;
-import com.lms.Models.UserLeave;
-import com.lms.Repository.LeaveApprovalRepository;
-import com.lms.Repository.UserLeaveRepository;
+import com.lms.dto.LeaveApprovalDTO;
+import com.lms.models.LeaveApproval;
+import com.lms.models.User;
+import com.lms.models.UserLeave;
+import com.lms.repository.LeaveApprovalRepository;
+import com.lms.repository.UserLeaveRepository;
+import com.lms.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -25,33 +28,44 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService{
         this.userLeaveRepository = userLeaveRepository;
     }
 
+    @Override
+    public Optional<LeaveApproval> getLeaveApprovalById(Long id) {
+        return leaveApprovalRepository.findById(id);
+    }
 
     @Override
     public LeaveApproval updateLeaveApprovalStatus(LeaveApprovalDTO leaveApprovalDTO) {
         Optional<LeaveApproval> leaveApprovalSearch = leaveApprovalRepository.findById(leaveApprovalDTO.getId());
-        if (leaveApprovalSearch.isPresent()) {
-            LeaveApproval leaveApproval = leaveApprovalSearch.get();
-            leaveApproval.setStatus(leaveApprovalDTO.getStatus());
-            leaveApproval.setUpdatedBy(leaveApprovalDTO.getUpdatedBy());
-            leaveApproval.setUpdatedDate(leaveApprovalDTO.getUpdatedDate());
-            LeaveApproval savedEntity = leaveApprovalRepository.save(leaveApproval);
+        LeaveApproval leaveApproval = leaveApprovalSearch.get();
+        leaveApproval.setStatus(leaveApprovalDTO.getStatus());
+        leaveApproval.setUpdatedBy(leaveApprovalDTO.getRequestedByEmail());
+        LeaveApproval savedEntity = leaveApprovalRepository.save(leaveApproval);
 
-            if (leaveApproval.getStatus() == 1) {
-                Page<LeaveApproval> approvals = leaveApprovalRepository.findByUserLeave_Id(leaveApproval.getUserLeave().getId(), PageRequest.of(0, 10));
-                for (LeaveApproval approval : approvals) {
-                    if (approval.getStatus() != 1) {
-                        break;
-                    }
-                    Optional<UserLeave> userLeave = userLeaveRepository.findById(leaveApproval.getUserLeave().getId());
-                    if (userLeave.isPresent()) {
-                        UserLeave updatedLeave = userLeave.get();
-                        updatedLeave.setStatus(1);
-                        userLeaveRepository.save(updatedLeave);
-                    }
+        if (leaveApproval.getStatus() == 2) {
+            Page<LeaveApproval> approvals = leaveApprovalRepository.findByUserLeave_Id(leaveApproval.getUserLeave().getId(), PageRequest.of(0, 10));
+            for (LeaveApproval approval : approvals) {
+                if (approval.getStatus() != 2) {
+                    break;
+                }
+                Optional<UserLeave> userLeave = userLeaveRepository.findById(leaveApproval.getUserLeave().getId());
+                if (userLeave.isPresent()) {
+                    UserLeave updatedLeave = userLeave.get();
+                    updatedLeave.setStatus(2);
+                    userLeaveRepository.save(updatedLeave);
+                } else {
+                    throw new NullPointerException("User leave request does not exists");
                 }
             }
-            return savedEntity;
         }
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Not found leave approval id");
+        return savedEntity;
     }
+
+    @Override
+    public Page<LeaveApproval> getLeaveApproveByManagerId(Long id, Pageable pageable) {
+        return leaveApprovalRepository.findAllByManagerId(id, pageable);
+    }
+
+    //TODO: list user leaveApproval by id
+    //TODO: click on date and show what requests there are
+
 }

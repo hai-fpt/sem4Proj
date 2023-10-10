@@ -1,8 +1,10 @@
-package com.lms.Models;
+package com.lms.models;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Type;
 
@@ -19,6 +21,8 @@ import java.util.List;
 )
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserLeave {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,6 +47,8 @@ public class UserLeave {
     //Status: 1: Pending, 2: Approved, 3: Rejected, 4: Cancelled
     private Integer status;
 
+    private String reason;
+
     @Type(type = "list-array")
     @Column(name = "inform_to", columnDefinition = "bigint[]")
     private List<Long> informTo;
@@ -54,6 +60,12 @@ public class UserLeave {
     @Column(name = "updated_date")
     @Temporal(TemporalType.TIMESTAMP)
     private Date updatedDate;
+
+    @PrePersist
+    private void createdDatePre() {
+        this.createdDate = new Date();
+        this.updatedDate = new Date();
+    }
 
     @Column(name = "updated_by")
     private String updatedBy;

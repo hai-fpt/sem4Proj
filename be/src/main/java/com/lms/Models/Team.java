@@ -1,7 +1,9 @@
-package com.lms.Models;
+package com.lms.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
@@ -11,13 +13,15 @@ import java.util.*;
 @Table(name = "team")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Team {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, name = "team_name")
+    @Column(nullable = false, name = "name")
     private String teamName;
 
     @Column(nullable = false)
@@ -31,14 +35,15 @@ public class Team {
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdDate;
 
-    @PrePersist
-    private void createdDatePre() {
-        this.createdDate = new Date();
-    }
-
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "updated_date")
     private Date updatedDate;
+
+    @PrePersist
+    private void createdDatePre() {
+        this.createdDate = new Date();
+        this.updatedDate = new Date();
+    }
 
     private String updated_by;
 

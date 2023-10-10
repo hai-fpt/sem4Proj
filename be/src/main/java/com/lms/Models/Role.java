@@ -1,8 +1,10 @@
-package com.lms.Models;
+package com.lms.models;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
@@ -18,13 +20,21 @@ import java.util.List;
 )
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Role {
     //0: admin; 1: manager; 2: user
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
+    public enum RoleEnum {
+        ADMIN,
+        MANAGER,
+        USER
+    }
+    @Enumerated(EnumType.STRING)
+    private RoleEnum name;
 
     private String description;
 

@@ -1,14 +1,16 @@
-package com.lms.Service;
+package com.lms.service;
 
-import com.lms.DTO.RoleDTO;
-import com.lms.Models.Role;
+import com.lms.dto.RoleDTO;
+import com.lms.models.Role;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface RoleService {
 
-    List<Role> getAllRoles();
+    Page<Role> getAllRoles(Pageable pageable);
 
     Optional<Role> findRoleById(Long id);
 

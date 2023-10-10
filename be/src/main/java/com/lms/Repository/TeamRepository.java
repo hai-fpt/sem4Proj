@@ -1,6 +1,6 @@
-package com.lms.Repository;
+package com.lms.repository;
 
-import com.lms.Models.Team;
+import com.lms.models.Team;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

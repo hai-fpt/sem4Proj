@@ -1,8 +1,8 @@
-package com.lms.Repository;
+package com.lms.repository;
 
-import com.lms.Models.Team;
-import com.lms.Models.User;
-import com.lms.Models.UserTeam;
+import com.lms.models.Team;
+import com.lms.models.User;
+import com.lms.models.UserTeam;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

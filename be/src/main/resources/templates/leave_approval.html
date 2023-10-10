@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title th:remove="all">Template for HTML email</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+</head>
+<body>
+<p>
+    Dear: <span style="font-weight: bold" th:each="dear, iterStat : ${dears}" th:text="${dear} + ${!iterStat.last ? ', ': ''}">Mr</span>
+</p>
+<p>
+    The leave request was <span th:text="${status}">${status}</span> by <span style="font-weight: bold" th:text="${processBy}">${processBy}</span>
+</p>
+
+<p> Please <a th:href="${link}">click here</a> to view detail this request</p>
+
+<p>
+    Regards, <br/>
+    <span th:text="${sendBy}">${sendBy}</span>
+</p>
+</body>
+</html>

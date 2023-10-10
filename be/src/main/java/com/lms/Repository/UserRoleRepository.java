@@ -1,7 +1,7 @@
-package com.lms.Repository;
+package com.lms.repository;
 
-import com.lms.Models.UserRole;
-import com.lms.Models.UserRoleKey;
+import com.lms.models.UserRole;
+import com.lms.models.UserRoleKey;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,8 +1,10 @@
-package com.lms.Models;
+package com.lms.models;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
@@ -15,6 +17,8 @@ import java.util.*;
 )
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class User {
 
     @Id
@@ -63,14 +67,15 @@ public class User {
     @Temporal(TemporalType.TIMESTAMP)
     private Date createdDate;
 
-    @PrePersist
-    private void createdDatePre() {
-        this.createdDate = new Date();
-    }
-
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "updated_date")
     private Date updatedDate;
+
+    @PrePersist
+    private void createdDatePre() {
+        this.createdDate = new Date();
+        this.updatedDate = new Date();
+    }
 
     @Column(name = "updated_by")
     private String updatedBy;
@@ -81,12 +86,18 @@ public class User {
     @Transient
     private String working_time;
 
-    @OneToMany(mappedBy = "user")
+    @Transient
+    private String team_alias;
+
+    @Transient
+    private String role_alias;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<UserTeam> userTeams = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<UserLeave> userLeaves = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", orphanRemoval = true)
+    @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL)
     private List<UserRole> userRoles = new ArrayList<>();
 }

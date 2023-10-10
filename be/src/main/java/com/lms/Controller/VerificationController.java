@@ -1,6 +1,6 @@
-package com.lms.Controller;
+package com.lms.controller;
 
-import com.lms.Security.TokenVerifier;
+import com.lms.security.TokenVerifier;
 import org.json.JSONObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package com.lms.DTO;
+package com.lms.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,16 +20,15 @@ public class LeaveRequestEmail implements Serializable {
 
 	private List<String> ccTos;
 
-	private String subject;
+	private List<String> dearTos;
 
-	private String sendBy;
+	private String subject = "[VDC] Leave Request";
 
-	private String team;
+	private UserDTO requester;
 
 	private String fromDate;
 
 	private String toDate;
 
 	private String reason;
-
 }

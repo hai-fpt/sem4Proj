@@ -1,6 +1,8 @@
-package com.lms.Models;
+package com.lms.models;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.Embeddable;
@@ -9,15 +11,9 @@ import java.io.Serializable;
 @Embeddable
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserRoleKey implements Serializable {
     private Long userId;
     private Long roleId;
-
-    public UserRoleKey() {
-    }
-
-    public UserRoleKey(Long userId, Long roleId) {
-        this.userId = userId;
-        this.roleId = roleId;
-    }
 }

@@ -1,4 +1,4 @@
-package com.lms.Security;
+package com.lms.security;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
@@ -8,7 +8,6 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -21,6 +20,8 @@ import java.util.Date;
 public class TokenVerifier {
     //TODO: MOVE THE SECRET THINGS INTO APPLICATION.YML OR ENV LATER
     private static String GOOGLE_CLIENT_ID = "647930186322-oolledhdbl5578p2kgcfq290re8jgi8c.apps.googleusercontent.com";
+//    @Value({})
+//    private static String GOOGLE_CLIENT_ID;
 
 
     public static ResponseEntity<String> verifyToken(String jwtToken) {
@@ -74,7 +75,7 @@ public class TokenVerifier {
             }
             return true;
         } catch (JwtException e) {
-            System.out.println(e);
+            e.printStackTrace();
             return false;
         }
     }
