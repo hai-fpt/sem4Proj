@@ -4,8 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
@@ -28,12 +31,12 @@ public class UserTeam {
     private Team team;
 
     @Column(name = "created_date", nullable = false, updatable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date createdDate;
+    @CreationTimestamp
+    private LocalDateTime createdDate;
 
     @Column(name = "updated_date")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date updatedDate;
+    @UpdateTimestamp
+    private LocalDateTime updatedDate;
 
     @Column(name = "updated_by")
     private String updatedBy;
@@ -43,9 +46,4 @@ public class UserTeam {
         this.team = team;
     }
 
-    @PrePersist
-    private void createdDatePre() {
-        this.createdDate = new Date();
-        this.updatedDate = new Date();
-    }
 }

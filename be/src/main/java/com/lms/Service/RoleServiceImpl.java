@@ -1,7 +1,6 @@
 package com.lms.service;
 
-import com.lms.dto.RoleDTO;
-import com.lms.models.Role;
+import com.lms.dto.Role;
 import com.lms.repository.RoleRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,26 +20,26 @@ public class RoleServiceImpl implements RoleService{
     }
 
     @Override
-    public Page<Role> getAllRoles(Pageable pageable) {
+    public Page<com.lms.models.Role> getAllRoles(Pageable pageable) {
         return roleRepository.findAll(pageable);
     }
 
     @Override
-    public Optional<Role> findRoleById(Long id) {
+    public Optional<com.lms.models.Role> findRoleById(Long id) {
         return roleRepository.findById(id);
     }
 
     @Override
-    public Role createRole(RoleDTO role) {
+    public com.lms.models.Role createRole(Role role) {
         ModelMapper modelMapper = new ModelMapper();
-        Role roleEntity = modelMapper.map(role, Role.class);
+        com.lms.models.Role roleEntity = modelMapper.map(role, com.lms.models.Role.class);
         return roleRepository.save(roleEntity);
     }
 
     @Override
-    public Role updateRole(RoleDTO role) {
+    public com.lms.models.Role updateRole(Role role) {
         ModelMapper modelMapper = new ModelMapper();
-        Role roleEntity = modelMapper.map(role, Role.class);
+        com.lms.models.Role roleEntity = modelMapper.map(role, com.lms.models.Role.class);
         return roleRepository.save(roleEntity);
     }
 

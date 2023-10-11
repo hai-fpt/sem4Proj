@@ -11,7 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class LeaveRequest extends BaseEmail {
 
-	private UserDTO requester;
+	private User requester;
 
 	private String fromDate;
 

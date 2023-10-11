@@ -1,8 +1,8 @@
 package com.lms.service;
 
-import com.lms.dto.TeamDTO;
-import com.lms.dto.TeamLeadDTO;
-import com.lms.models.Team;
+import com.lms.dto.Team;
+import com.lms.dto.projection.ManagerProjection;
+import com.lms.dto.projection.TeamProjection;
 import com.lms.models.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,17 +12,17 @@ import java.util.Optional;
 
 public interface TeamService {
     //    List<Team> getAllTeams();
-    Page<Team> getAllTeams(Pageable pageable);
+    Page<TeamProjection> getAllTeams(Pageable pageable);
 
-    Optional<Team> findTeamById(Long id);
+    Optional<com.lms.models.Team> findTeamById(Long id);
 
-    List<User> getTeamManagers();
+    List<ManagerProjection> getTeamManagers();
 
-    Team findTeamByName(String teamName);
+    TeamProjection findTeamProjectionByName(String teamName);
 
-    Team createTeam(TeamDTO team);
+    TeamProjection createTeam(Team team);
 
-    Team updateTeam(TeamDTO team);
+    TeamProjection updateTeam(Team team);
 
     void deleteTeam(Long id);
 }

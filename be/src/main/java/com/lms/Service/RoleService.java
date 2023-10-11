@@ -1,22 +1,20 @@
 package com.lms.service;
 
-import com.lms.dto.RoleDTO;
-import com.lms.models.Role;
+import com.lms.dto.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface RoleService {
 
-    Page<Role> getAllRoles(Pageable pageable);
+    Page<com.lms.models.Role> getAllRoles(Pageable pageable);
 
-    Optional<Role> findRoleById(Long id);
+    Optional<com.lms.models.Role> findRoleById(Long id);
 
-    Role createRole(RoleDTO role);
+    com.lms.models.Role createRole(Role role);
 
-    Role updateRole(RoleDTO role);
+    com.lms.models.Role updateRole(Role role);
 
     void deleteRole(Long id);
 }

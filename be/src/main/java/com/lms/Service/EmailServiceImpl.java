@@ -43,8 +43,8 @@ public class EmailServiceImpl extends BaseSendMail implements EmailService {
 		List<String> sendTos = process.getSendTos();
 		Map<String, Object> properties = new HashMap<>();
 		properties.put("dears", process.getDearTos());
-		properties.put("status", process.getStatus().name());
-		properties.put("processBy", process.getProcessBy().getName());
+		properties.put("status", process.getStatus());
+		properties.put("processBy", process.getProcessBysAsArray());
 		properties.put("link", process.getLink());
 		String subject = process.getSubject().isEmpty() ? "[VDC] Leave request process" : process.getSubject();
 		List<String> ccTos = process.getCcTos();

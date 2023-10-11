@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Setter
 @Getter
@@ -16,5 +19,13 @@ public class LeaveProcess extends BaseEmail {
 
 	private	ApprovalStatus status;
 
-	private UserDTO processBy;
+	private List<User> processBys = new ArrayList<>();
+
+	public void setProcessBy(User user) {
+		processBys.add(user);
+	}
+
+	public String[] getProcessBysAsArray() {
+		return processBys.stream().map(User::getName).toArray(String[]::new);
+	}
 }

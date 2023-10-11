@@ -1,12 +1,12 @@
 package com.lms.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -30,19 +30,14 @@ public class Department {
     private User manager;
 
     @Column(nullable = false, updatable = false, name = "created_date")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date createdDate;
+    @CreationTimestamp
+    private LocalDateTime createdDate;
 
     @Column(name = "updated_date")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date updatedDate;
+    @UpdateTimestamp
+    private LocalDateTime updatedDate;
 
-    @PrePersist
-    private void createdDatePre() {
-        this.createdDate = new Date();
-        this.updatedDate = new Date();
-    }
-
+    @Column(name = "updated_by")
     private String updated_by;
 
     @OneToMany(mappedBy = "department")

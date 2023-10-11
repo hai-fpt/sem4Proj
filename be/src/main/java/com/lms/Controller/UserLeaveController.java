@@ -1,26 +1,28 @@
 package com.lms.controller;
 
-import com.lms.dto.DateRangeDTO;
-import com.lms.dto.UserLeaveCancelDTO;
-import com.lms.dto.UserLeaveDTO;
+import com.lms.dto.ApprovalStatus;
+import com.lms.dto.DateRange;
+import com.lms.dto.UserLeaveCancel;
+import com.lms.dto.UserLeave;
+import com.lms.dto.projection.UserLeaveProjection;
 import com.lms.models.Leave;
 import com.lms.models.User;
-import com.lms.models.UserLeave;
 import com.lms.service.*;
 import com.lms.utils.ControllerUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.Optional;
 
 @RestController
@@ -32,7 +34,8 @@ public class UserLeaveController {
     private final LeaveService leaveService;
 
     @Autowired
-    public UserLeaveController(UserLeaveService userLeaveService, ControllerUtils controllerUtils, UserService userService, LeaveService leaveService) {
+    public UserLeaveController(UserLeaveService userLeaveService, ControllerUtils controllerUtils,
+                               UserService userService, LeaveService leaveService) {
         this.userLeaveService = userLeaveService;
         this.controllerUtils = controllerUtils;
         this.userService = userService;
@@ -42,7 +45,7 @@ public class UserLeaveController {
     @PostMapping("/user_leave")
     @Operation(summary = "Create leave ticket",
             description = "For user, only id is required. For leave, only id is required. fromDate toDate YYYY-MM-DD")
-    public ResponseEntity<UserLeave> createUserLeave(@RequestBody UserLeaveDTO userLeaveDTO) {
+    public ResponseEntity<UserLeaveProjection> createUserLeave(@RequestBody UserLeave userLeaveDTO) throws IOException {
         if (!controllerUtils.validateRequestedUser(userLeaveDTO.getRequestedByEmail())) {
             throw new NullPointerException("Email " + userLeaveDTO.getRequestedByEmail() + " does not exists");
         }
@@ -53,21 +56,23 @@ public class UserLeaveController {
         if (optionalLeave.isEmpty()) {
             throw new NullPointerException("Leave with id " + userLeaveDTO.getLeave().getId() + " does not exists");
         }
-        userLeaveDTO.setStatus(1);
-        UserLeave userLeave = userLeaveService.createUserLeave(userLeaveDTO);
+        userLeaveDTO.setStatus(ApprovalStatus.PENDING);
+//        com.lms.models.UserLeave userLeave = userLeaveService.createUserLeave(userLeaveDTO);
+        UserLeaveProjection userLeave = userLeaveService.createUserLeave(userLeaveDTO);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(userLeave);
     }
 
     @PutMapping("/user_leave/cancel")
-    public ResponseEntity<UserLeave> cancelLeave(@RequestBody UserLeaveCancelDTO userLeaveCancelDTO) {
-        if (!controllerUtils.validateRequestedUser(userLeaveCancelDTO.getRequestedByEmail())) {
-            throw new NullPointerException("Email " + userLeaveCancelDTO.getRequestedByEmail() + " does not exists");
+    public ResponseEntity<UserLeaveProjection> cancelLeave(@RequestBody UserLeaveCancel userLeaveCancel) {
+        if (!controllerUtils.validateRequestedUser(userLeaveCancel.getRequestedByEmail())) {
+            throw new NullPointerException("Email " + userLeaveCancel.getRequestedByEmail() + " does not exists");
         }
-        Optional<UserLeave> userLeaveOptional = userLeaveService.getUserLeaveById(userLeaveCancelDTO.getId());
+        Optional<com.lms.models.UserLeave> userLeaveOptional = userLeaveService.getUserLeaveById(userLeaveCancel.getId());
         if (userLeaveOptional.isEmpty()) {
-            throw new NullPointerException("Leave ticket with Id " + userLeaveCancelDTO.getId() + " does not exists");
+            throw new NullPointerException("Leave ticket with Id " + userLeaveCancel.getId() + " does not exists");
         }
-        UserLeave userLeave = userLeaveService.cancelLeave(userLeaveCancelDTO);
+        UserLeaveProjection userLeave = userLeaveService.cancelLeave(userLeaveCancel);
         return ResponseEntity.ok(userLeave);
     }
 
@@ -76,13 +81,13 @@ public class UserLeaveController {
 //        Page<UserLeave> userLeaves = userLeaveService.getUserLeaveByRole(userDTO, pageable);
 //        return ResponseEntity.ok(userLeaves);
 //    }
-    public ResponseEntity<Page<UserLeave>> getUserLeaveByRole(@RequestParam Long id, @PageableDefault(size = 10) Pageable pageable) {
+    public ResponseEntity<Page<UserLeaveProjection>> getUserLeaveByRole(@RequestParam Long id, @PageableDefault(size = 10) Pageable pageable) {
         if (!controllerUtils.validateRequestedUser(id)) {
             throw new NullPointerException("User with id " + id + " does not exists");
         }
         Pageable sorted = controllerUtils.sortPage(pageable, "updatedDate");
         User user = userService.getUserById(id).get();
-        Page<UserLeave> userLeaves = userLeaveService.getUserLeaveByRole(user, sorted);
+        Page<UserLeaveProjection> userLeaves = userLeaveService.getUserLeaveByRole(user, sorted);
         return ResponseEntity.ok(userLeaves);
     }
 
@@ -91,13 +96,13 @@ public class UserLeaveController {
 //        Page<UserLeave> userLeaves = userLeaveService.getUserLeaveByUser(userDTO, pageable);
 //        return ResponseEntity.ok(userLeaves);
 //    }
-    public ResponseEntity<Page<UserLeave>> getUserLeaveByUser(@RequestParam Long id, @PageableDefault(size = 10) Pageable pageable) {
+    public ResponseEntity<Page<UserLeaveProjection>> getUserLeaveByUser(@RequestParam Long id, @PageableDefault(size = 10) Pageable pageable) {
         if (!controllerUtils.validateRequestedUser(id)) {
             throw new NullPointerException("User with id " + id + " does not exists");
         }
         Pageable sorted = controllerUtils.sortPage(pageable, "updatedDate");
         User user = userService.getUserById(id).get();
-        Page<UserLeave> userLeaves = userLeaveService.getUserLeaveByUser(user, sorted);
+        Page<UserLeaveProjection> userLeaves = userLeaveService.getUserLeaveByUser(user, sorted);
         return ResponseEntity.ok(userLeaves);
     }
 
@@ -106,26 +111,17 @@ public class UserLeaveController {
 //        Page<UserLeave> userLeaves = userLeaveService.getUserLeaveByFromDate(userLeaveDTO, pageable);
 //        return ResponseEntity.ok(userLeaves);
 //    }
-    public ResponseEntity<Page<UserLeave>> getUserLeaveByFromDate(@RequestBody DateRangeDTO dateRangeDTO, @PageableDefault(size = 10) Pageable pageable) {
+    public ResponseEntity<Page<UserLeaveProjection>> getUserLeaveByFromDate(@RequestBody DateRange dateRange, @PageableDefault(size = 10) Pageable pageable) {
         Pageable sorted = controllerUtils.sortPage(pageable, "updatedDate");
-        Page<UserLeave> userLeaves = userLeaveService.getUserLeaveByFromDate(dateRangeDTO, sorted);
+        Page<UserLeaveProjection> userLeaves = userLeaveService.getUserLeaveByFromDate(dateRange, sorted);
         return ResponseEntity.ok(userLeaves);
     }
 
     @GetMapping("/user_leave/date")
-    public ResponseEntity<Page<UserLeave>> getUserLeaveByDateRange(@RequestBody DateRangeDTO dateRangeDTO, @PageableDefault(size = 10) Pageable pageable) {
+    public ResponseEntity<Page<UserLeaveProjection>> getUserLeaveByDateRange(@RequestBody DateRange dateRange, @PageableDefault(size = 10) Pageable pageable) {
         Pageable sorted = controllerUtils.sortPage(pageable, "updatedDate");
-        Page<UserLeave> userLeaves = userLeaveService.getUserLeaveByDateRange(dateRangeDTO, sorted);
+        Page<UserLeaveProjection> userLeaves = userLeaveService.getUserLeaveByDateRange(dateRange, sorted);
         return ResponseEntity.ok(userLeaves);
     }
 
-    @GetMapping("/user_leave/export")
-    public ResponseEntity<Resource> getFile() {
-        String filename = "users_leave.xlsx";
-        InputStreamResource file = new InputStreamResource(userLeaveService.exportExcelUserLeave());
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
-                .contentType(MediaType.parseMediaType("application/vnd.ms-excel"))
-                .body(file);
-    }
 }

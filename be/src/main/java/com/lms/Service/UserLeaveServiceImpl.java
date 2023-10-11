@@ -1,19 +1,29 @@
 package com.lms.service;
 
 import com.lms.dto.*;
+import com.lms.dto.User;
+import com.lms.dto.UserLeave;
+import com.lms.dto.projection.UserLeaveProjection;
 import com.lms.exception.UnauthorizedException;
-import com.lms.helper.ExcelHelper;
 import com.lms.models.*;
+import com.lms.models.LeaveApproval;
+import com.lms.models.Role;
 import com.lms.repository.LeaveApprovalRepository;
 import com.lms.repository.UserLeaveRepository;
 import com.lms.repository.UserRepository;
+import com.lms.utils.DateCalculation;
+import com.lms.utils.ProjectionMapper;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
+import javax.mail.MessagingException;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -22,54 +32,73 @@ public class UserLeaveServiceImpl implements UserLeaveService {
     private final UserLeaveRepository userLeaveRepository;
     private final LeaveApprovalRepository leaveApprovalRepository;
     private final EmailServiceImpl emailService;
+    private final HolidayService holidayService;
+    private final FilesStorageService filesStorageService;
+    private final DateCalculation dateCalculation;
 
 
-    public UserLeaveServiceImpl(UserRepository userRepository, UserLeaveRepository userLeaveRepository, LeaveApprovalRepository leaveApprovalRepository, EmailServiceImpl emailService) {
+    public UserLeaveServiceImpl(UserRepository userRepository, UserLeaveRepository userLeaveRepository,
+                                LeaveApprovalRepository leaveApprovalRepository, EmailServiceImpl emailService,
+                                HolidayService holidayService, FilesStorageServiceImpl filesStorageServiceImpl, DateCalculation dateCalculation) {
         this.userRepository = userRepository;
         this.userLeaveRepository = userLeaveRepository;
         this.leaveApprovalRepository = leaveApprovalRepository;
         this.emailService = emailService;
+        this.holidayService = holidayService;
+        this.filesStorageService = filesStorageServiceImpl;
+        this.dateCalculation = dateCalculation;
     }
 
     @Override
-    public Optional<UserLeave> getUserLeaveById(Long id) {
+    public Optional<com.lms.models.UserLeave> getUserLeaveById(Long id) {
         return userLeaveRepository.findById(id);
     }
 
     @Override
-    public UserLeave createUserLeave(UserLeaveDTO userLeaveDTO) {
+    public UserLeaveProjection createUserLeave(UserLeave userLeave) throws IOException {
         //Assume got a list of team lead
         ModelMapper modelMapper = new ModelMapper();
-        modelMapper.addMappings(new PropertyMap<UserLeave, UserLeaveDTO>() {
+        ModelMapper modelMapper1 = new ModelMapper();
+        modelMapper.addMappings(new PropertyMap<com.lms.models.UserLeave, UserLeave>() {
             @Override
             protected void configure() {
                 skip(destination.getTeamLeads());
             }
         });
 
-        User user = userRepository.findById(userLeaveDTO.getUser().getId()).get();
-        userLeaveDTO.setUser(user);
-        UserLeave userLeaveEntity = modelMapper.map(userLeaveDTO, UserLeave.class);
-        userLeaveEntity.setUpdatedBy(userLeaveDTO.getRequestedByEmail());
+        com.lms.models.User user = userRepository.findById(userLeave.getUser().getId()).get();
+        User userDTO = modelMapper1.map(user, User.class);
+        userLeave.setUser(userDTO);
+        com.lms.models.UserLeave userLeaveEntity = modelMapper.map(userLeave, com.lms.models.UserLeave.class);
+        userLeaveEntity.setUpdatedBy(userLeave.getRequestedByEmail());
 
-        UserLeave savedUserLeave = userLeaveRepository.save(userLeaveEntity);
+        com.lms.models.UserLeave savedUserLeave = userLeaveRepository.save(userLeaveEntity);
+        UserLeaveProjection projection = ProjectionMapper.mapToUserLeaveProjection(savedUserLeave);
 
-        List<Long> teamLeads = userLeaveDTO.getTeamLeads();
+        List<Long> teamLeads = userLeave.getTeamLeads();
         if (!teamLeads.isEmpty()) {
             List<LeaveApproval> leaveApprovals = new ArrayList<>();
-            Date currentDate = new Date();
-            String userName = userLeaveDTO.getRequestedByEmail();
+            LocalDateTime currentDate = LocalDateTime.now();
+            String requestedEmail = userLeave.getRequestedByEmail();
             for (Long lead : teamLeads) {
                 LeaveApproval leaveApproval = new LeaveApproval(
                         userLeaveEntity,
                         lead,
                         currentDate,
                         currentDate,
-                        userName
+                        requestedEmail
                 );
                 leaveApprovals.add(leaveApproval);
             }
             leaveApprovalRepository.saveAll(leaveApprovals);
+            //Insert attachment
+            if (userLeave.getAttachments() != null && userLeave.getAttachments().length > 0) {
+                filesStorageService.saveToDatabase(
+                        filesStorageService.saveToStorage(
+                                userLeave.getAttachments(),
+                                savedUserLeave.getId().toString(),
+                                savedUserLeave.getUpdatedBy()), savedUserLeave);
+            }
         } else {
             throw new NullPointerException("At least 1 team lead must exists");
         }
@@ -77,14 +106,13 @@ public class UserLeaveServiceImpl implements UserLeaveService {
         //Email
         //TODO: FIX THIS AND FINISH PROPERLY
         //TODO: Add email send when fully approved and when cancelled
-        ModelMapper modelMapper1 = new ModelMapper();
-        UserDTO userDTO = modelMapper1.map(user, UserDTO.class);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyy HH:mm:ss");
 
         LeaveRequest leaveRequestEmail = new LeaveRequest();
         leaveRequestEmail.setRequester(userDTO);
-        leaveRequestEmail.setFromDate(String.valueOf(userLeaveDTO.getFromDate()));
-        leaveRequestEmail.setToDate(String.valueOf(userLeaveDTO.getToDate()));
-        leaveRequestEmail.setReason(userLeaveDTO.getReason());
+        leaveRequestEmail.setFromDate(userLeave.getFromDate().format(formatter));
+        leaveRequestEmail.setToDate(userLeave.getToDate().format(formatter));
+        leaveRequestEmail.setReason(userLeave.getReason());
         List<String> sendTo = new ArrayList<>();
         sendTo.add("hainvh@mz.co.kr");
         leaveRequestEmail.setSendTos(sendTo);
@@ -93,28 +121,40 @@ public class UserLeaveServiceImpl implements UserLeaveService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return savedUserLeave;
+        return projection;
     }
 
     @Override
-    public UserLeave cancelLeave(UserLeaveCancelDTO userLeaveCancelDTO) {
-        UserLeave userLeave = userLeaveRepository.findById(userLeaveCancelDTO.getId()).get();
-        userLeave.setUpdatedBy(userLeaveCancelDTO.getRequestedByEmail());
-        userLeave.setUpdatedDate(new Date());
-        userLeave.setStatus(4);
+    public UserLeaveProjection cancelLeave(UserLeaveCancel userLeaveCancel) {
+        com.lms.models.UserLeave userLeave = userLeaveRepository.findById(userLeaveCancel.getId()).get();
+        userLeave.setUpdatedBy(userLeaveCancel.getRequestedByEmail());
+        userLeave.setUpdatedDate(LocalDateTime.now());
+        userLeave.setStatus(ApprovalStatus.CANCELLED);
 
-        User user = userRepository.findById(userLeave.getId()).get();
+        com.lms.models.User user = userRepository.findById(userLeave.getUser().getId()).get();
         ModelMapper modelMapper = new ModelMapper();
-        UserDTO userDTO = modelMapper.map(user, UserDTO.class);
+        User userDTO = modelMapper.map(user, User.class);
 
-        LeaveRequestEmail leaveRequestEmail = new LeaveRequestEmail();
-        leaveRequestEmail.setRequester(userDTO);
-        //Add the rest of the info, send cancel email
-        return userLeaveRepository.save(userLeave);
+        LeaveProcess leaveProcess = new LeaveProcess();
+        leaveProcess.setStatus(userLeave.getStatus());
+        leaveProcess.setProcessBy(userDTO);
+        List<String> sendTo = new ArrayList<>();
+        sendTo.add("hainvh@mz.co.kr");
+        leaveProcess.setSendTos(sendTo);
+        try {
+            emailService.sendApproval(leaveProcess);
+        } catch (MessagingException e) {
+            throw new RuntimeException(e);
+        }
+
+        com.lms.models.UserLeave saved = userLeaveRepository.save(userLeave);
+        UserLeaveProjection projection = ProjectionMapper.mapToUserLeaveProjection(saved);
+        return projection;
     }
 
     @Override
-    public Page<UserLeave> getUserLeaveByRole(User user, Pageable pageable) {
+    public Page<UserLeaveProjection> getUserLeaveByRole(com.lms.models.User user, Pageable pageable) {
+        Page<com.lms.models.Holiday> holidays = holidayService.getAllHolidays(Pageable.unpaged());
         List<UserRole> userRoles = user.getUserRoles();
         if (userRoles.isEmpty()) {
             throw new NullPointerException("This user does not have any roles");
@@ -123,9 +163,23 @@ public class UserLeaveServiceImpl implements UserLeaveService {
         for (UserRole userRole : userRoles) {
             Role.RoleEnum role = userRole.getRole().getName();
             if (Objects.equals(role, Role.RoleEnum.ADMIN)) {
-                return userLeaveRepository.findAll(pageable);
+                List<com.lms.models.UserLeave> userLeaves = userLeaveRepository.findAll();
+                List<UserLeaveProjection> userLeaveProjections = new ArrayList<>();
+                for (com.lms.models.UserLeave userLeave : userLeaves) {
+                    userLeave.setDaysOff(dateCalculation.calculateSingleUserLeaveDaysOff(userLeave, holidays));
+                    UserLeaveProjection projection = ProjectionMapper.mapToUserLeaveProjection(userLeave);
+                    userLeaveProjections.add(projection);
+                }
+                return new PageImpl<>(userLeaveProjections, pageable, userLeaveProjections.size());
             } else if (Objects.equals(role, Role.RoleEnum.MANAGER)) {
-                return userLeaveRepository.getUserLeaveByTeam(user.getId(), pageable);
+                List<com.lms.models.UserLeave> userLeaves = userLeaveRepository.getUserLeaveByTeam(user.getId());
+                List<UserLeaveProjection> userLeaveProjections = new ArrayList<>();
+                for (com.lms.models.UserLeave userLeave : userLeaves) {
+                    userLeave.setDaysOff(dateCalculation.calculateSingleUserLeaveDaysOff(userLeave, holidays));
+                    UserLeaveProjection projection = ProjectionMapper.mapToUserLeaveProjection(userLeave);
+                    userLeaveProjections.add(projection);
+                }
+                return new PageImpl<>(userLeaveProjections, pageable, userLeaveProjections.size());
             } else {
                 throw new UnauthorizedException("User is not authorized");
             }
@@ -134,35 +188,29 @@ public class UserLeaveServiceImpl implements UserLeaveService {
     }
 
     @Override
-    public Page<UserLeave> getUserLeaveByUser(User user, Pageable pageable) {
+    public Page<UserLeaveProjection> getUserLeaveByUser(com.lms.models.User user, Pageable pageable) {
         return userLeaveRepository.findUserLeaveByUser(user, pageable);
     }
 
     @Override
-    public Page<UserLeave> getUserLeaveByFromDate(DateRangeDTO dateRangeDTO, Pageable pageable) {
-        return userLeaveRepository.findUserLeaveByFromDate(dateRangeDTO.getStartDate(), pageable);
+    public Page<UserLeaveProjection> getUserLeaveByFromDate(DateRange dateRange, Pageable pageable) {
+        return userLeaveRepository.findUserLeaveByFromDate(dateRange.getStartDate(), pageable);
     }
 
     @Override
-    public Page<UserLeave> getUserLeaveByDateRange(DateRangeDTO dateRangeDTO, Pageable pageable) {
-        Date date = dateRangeDTO.getSingleDate();
+    public Page<UserLeaveProjection> getUserLeaveByDateRange(DateRange dateRange, Pageable pageable) {
+        LocalDateTime date = dateRange.getSingleDate();
         return userLeaveRepository.findUserLeaveByDate(date, pageable);
     }
 
     @Override
-    public Page<UserLeave> getUserLeaveByMonth(DateRangeDTO dateRangeDTO, Pageable pageable) {
-        Date date = dateRangeDTO.getSingleDate();
-        return userLeaveRepository.findUserLeaveByMonth(date, pageable);
+    public Page<UserLeaveProjection> getUserLeaveByMonth(DateRange dateRange, Pageable pageable) {
+        return userLeaveRepository.findUserLeavesBetweenDates(dateRange.getStartDate(), dateRange.getEndDate(), pageable);
     }
 
     @Override
-    public List<UserLeave> getUserLeaveByIdAndStatus(Long id, int status) {
-        return userLeaveRepository.findUserLeaveByUserIdAndStatus(id, status);
+    public List<UserLeaveProjection> getUserLeaveByIdAndStatusAndType(Long id, ApprovalStatus status, boolean affects) {
+        return userLeaveRepository.findUserLeaveByUserIdAndStatusAndAndLeave_AffectsDaysOff(id, status, affects);
     }
 
-    public ByteArrayInputStream exportExcelUserLeave() {
-        List<UserLeave> leaves = userLeaveRepository.findAll();
-        ByteArrayInputStream in = ExcelHelper.exportToExcel(leaves);
-        return in;
-    }
 }

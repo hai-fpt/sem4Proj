@@ -1,21 +1,23 @@
 package com.lms.service;
 
-import com.lms.dto.LeaveDTO;
+import com.lms.dto.Leave;
+import com.lms.dto.projection.LeaveProjection;
+import com.lms.exception.DuplicateException;
 import com.lms.exception.NotFoundByIdException;
-import com.lms.models.Leave;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.Optional;
 
 public interface LeaveService {
 
-    Page<Leave> getAllLeaves(Pageable pageable);
+    Page<LeaveProjection> getAllLeaves(Pageable pageable);
 
-    Optional<Leave> findLeaveById(Long id) throws NotFoundByIdException;
+    Optional<com.lms.models.Leave> findLeaveById(Long id);
 
-    Leave createLeave(LeaveDTO leave);
+    com.lms.models.Leave createLeave(Leave leave) throws DuplicateException;
 
-    Leave updateLeave(Long id, LeaveDTO leave) throws NotFoundByIdException;
+    com.lms.models.Leave updateLeave(Long id, Leave leave) throws NotFoundByIdException, DuplicateException;
 
     void deleteLeave(Long id);
+
 }

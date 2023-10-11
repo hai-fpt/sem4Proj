@@ -1,20 +1,23 @@
 package com.lms.service;
 
-import com.lms.dto.HolidayDTO;
+import com.lms.dto.Holiday;
+import com.lms.dto.projection.HolidayProjection;
+import com.lms.exception.DuplicateException;
 import com.lms.exception.NotFoundByIdException;
-import com.lms.models.Holiday;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.Optional;
 
 public interface HolidayService{
-    Page<Holiday> getAllHolidays(Pageable pageable);
+    Page<com.lms.models.Holiday> getAllHolidays(Pageable pageable);
 
-    Optional<Holiday> findHolidayById(Long id) throws NotFoundByIdException;
+    Optional<com.lms.models.Holiday> findHolidayById(Long id) throws NotFoundByIdException;
 
-    Holiday createHoliday(HolidayDTO holiday);
+    com.lms.models.Holiday createHoliday(Holiday holiday) throws DuplicateException;
 
-    Holiday updateHoliday(Long id, HolidayDTO holiday) throws NotFoundByIdException;
+    com.lms.models.Holiday updateHoliday(Long id, Holiday holiday) throws NotFoundByIdException, DuplicateException;
 
     void deleteHoliday(Long id);
+
+    Page<com.lms.models.Holiday> getAllHolidaysByYear(int year, Pageable pageable);
 }

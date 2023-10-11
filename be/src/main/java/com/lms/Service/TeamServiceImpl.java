@@ -1,22 +1,22 @@
 package com.lms.service;
 
-import com.lms.dto.TeamDTO;
-import com.lms.dto.TeamLeadDTO;
-import com.lms.models.Team;
+import com.lms.dto.Team;
+import com.lms.dto.projection.ManagerProjection;
+import com.lms.dto.projection.TeamProjection;
 import com.lms.models.User;
 import com.lms.models.UserTeam;
 import com.lms.repository.TeamRepository;
 import com.lms.repository.UserRepository;
 import com.lms.repository.UserTeamRepository;
+import com.lms.utils.ProjectionMapper;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -33,33 +33,34 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    public Page<Team> getAllTeams(Pageable pageable) {
-        return teamRepository.findAll(pageable);
+    public Page<TeamProjection> getAllTeams(Pageable pageable) {
+        return teamRepository.findAllProjectedBy(pageable);
     }
     @Override
-    public Optional<Team> findTeamById(Long id) {
+    public Optional<com.lms.models.Team> findTeamById(Long id) {
         return teamRepository.findById(id);
     }
 
     @Override
-    public Team findTeamByName(String name) {
-        return teamRepository.findTeamByteamName(name);
+    public TeamProjection findTeamProjectionByName(String name) {
+        return teamRepository.findTeamProjectionByTeamName(name);
     }
 
     @Override
-    public Team createTeam(TeamDTO teamDTO) {
+    public TeamProjection createTeam(Team teamDTO) {
         ModelMapper modelMapper = new ModelMapper();
         Optional<User> user = userRepository.findById(teamDTO.getManagerId());
         User manager = user.get();
-        modelMapper.addMappings(new PropertyMap<TeamDTO, Team>() {
+        modelMapper.addMappings(new PropertyMap<Team, com.lms.models.Team>() {
             @Override
             protected void configure() {
                 map().setManager(manager);
                 map().setUpdated_by(teamDTO.getRequestedByEmail());
             }
         });
-        Team team = modelMapper.map(teamDTO, Team.class);
+        com.lms.models.Team team = modelMapper.map(teamDTO, com.lms.models.Team.class);
         teamRepository.save(team);
+        TeamProjection projection = ProjectionMapper.mapToTeamProjection(team);
 
         List<Long> userList = teamDTO.getUserList();
         List<User> users = userRepository.findAllById(userList);
@@ -74,33 +75,35 @@ public class TeamServiceImpl implements TeamService {
         }
 
         userTeamRepository.saveAll(userTeams);
-        return team;
+        return projection;
     }
 
     @Override
-    public List<User> getTeamManagers() {
-        List<Team> teams = teamRepository.findAll();
+    public List<ManagerProjection> getTeamManagers() {
+        List<com.lms.models.Team> teams = teamRepository.findAll();
         if (teams.isEmpty()) {
             throw new NullPointerException("No team managers available");
         }
-        List<User> managers = new ArrayList<>();
-        for (Team team : teams) {
+        List<ManagerProjection> managers = new ArrayList<>();
+        for (com.lms.models.Team team : teams) {
             if (team.getManager() != null)
-                managers.add(team.getManager());
+                managers.add(ProjectionMapper.mapToManagerProjection(team.getManager()));
         }
         return managers;
     }
     @Override
-    public Team updateTeam(TeamDTO team) {
+    public TeamProjection updateTeam(Team team) {
         ModelMapper modelMapper = new ModelMapper();
-        modelMapper.addMappings(new PropertyMap<TeamDTO, Team>() {
+        modelMapper.addMappings(new PropertyMap<Team, com.lms.models.Team>() {
             @Override
             protected void configure() {
                 map().setUpdated_by(team.getRequestedByEmail());
             }
         });
-        Team teamEntity = modelMapper.map(team, Team.class);
-        return teamRepository.save(teamEntity);
+        com.lms.models.Team teamEntity = modelMapper.map(team, com.lms.models.Team.class);
+        teamEntity.setUpdatedDate(LocalDateTime.now());
+        com.lms.models.Team updated = teamRepository.save(teamEntity);
+        return ProjectionMapper.mapToTeamProjection(updated);
     }
     @Override
     public void deleteTeam(Long id) {

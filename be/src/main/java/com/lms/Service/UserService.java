@@ -1,47 +1,46 @@
 package com.lms.service;
 
-import com.lms.dto.ChangeUserStatusDTO;
-import com.lms.dto.RoleDTO;
-import com.lms.dto.UserDTO;
-import com.lms.models.User;
+import com.lms.dto.ChangeUserStatus;
+import com.lms.dto.Role;
+import com.lms.dto.User;
+import com.lms.dto.projection.UserProjection;
 import com.lms.models.UserTeam;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Optional;
 
 public interface UserService {
-    Page<User> getAllUsers(Pageable pageable);
+    Page<UserProjection> getAllUsers(Pageable pageable);
 
-    Optional<User> getUserById(Long id);
+    Optional<com.lms.models.User> getUserById(Long id);
 
-    Optional<User> getUserByEmail(String email);
+    Optional<UserProjection> getUserByEmail(String email);
 
-    Page<User> getUserCreatedBetweenDates(Date starDate, Date endDate, Pageable pageable);
+    Page<UserProjection> getUserCreatedBetweenDates(LocalDateTime starDate, LocalDateTime endDate, Pageable pageable);
 
-    Page<UserTeam> getUserTeamByUser(User user, Pageable pageable);
+    Page<UserTeam> getUserTeamByUser(com.lms.models.User user, Pageable pageable);
 
-    Page<User> getUserByRole(User user, Pageable pageable);
+    Page<UserProjection> getUserByRole(com.lms.models.User user, Pageable pageable);
 
-    User createUser(UserDTO user);
+    UserProjection createUser(User user);
 
-    User updateUser(UserDTO user);
+    UserProjection updateUser(User user);
 
-    User saveUserDate(User user);
-
-    User changeStatus(Long id, ChangeUserStatusDTO statusDTO);
+    UserProjection changeStatus(Long id, ChangeUserStatus statusDTO);
 
     void deleteUser(Long id);
 
-    void addUserRole(UserDTO userDTO, RoleDTO roleDTO);
+    void addUserRole(User user, Role role);
 
-    void removeUserRole(UserDTO userDTO, RoleDTO roleDTO);
+    void removeUserRole(User user, Role role);
 
     ByteArrayInputStream exportExcelUser();
 
     void saveExcel(MultipartFile file);
-    Page<User> searchUser(String keyword, Pageable pageable);
+    Page<UserProjection> searchUser(String keyword, Pageable pageable);
 }

@@ -1,8 +1,8 @@
 package com.lms.dto;
 
 public enum ApprovalStatus {
-	REQUEST,
-	APPROVAL,
-	REJECT,
-	CANCEL
+	PENDING,
+	APPROVED,
+	REJECTED,
+	CANCELLED
 }

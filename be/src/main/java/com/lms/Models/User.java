@@ -6,8 +6,13 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.LocalDateTime;
 import java.util.*;
 @Entity
 @Table(name = "users")
@@ -27,7 +32,8 @@ public class User {
 
     private String name;
 
-    private Date date_of_birth;
+    @Column(name = "date_of_birth")
+    private LocalDateTime dateOfBirth;
 
     @Column(nullable = false)
     private String email;
@@ -36,9 +42,11 @@ public class User {
 
     private String university;
 
-    private String university_code;
+    @Column(name = "university_code")
+    private String universityCode;
 
-    private Date university_graduate_date;
+    @Column(name = "university_graduate_date")
+    private LocalDateTime universityGraduateDate;
 
     private String skills;
 
@@ -53,7 +61,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     private RankEnum rank;
 
-    private Date joined_date;
+    @Column(name = "joined_date")
+    private LocalDateTime joinedDate;
 
     private String department;
 
@@ -61,36 +70,31 @@ public class User {
     @Column(nullable = false)
     private boolean status;
 
-    private Date resigned_date;
+    @Column(name = "resigned_date")
+    private LocalDateTime resignedDate;
 
     @Column(nullable = false, updatable = false, name = "created_date")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date createdDate;
+    @CreationTimestamp
+    private LocalDateTime createdDate;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "updated_date")
-    private Date updatedDate;
-
-    @PrePersist
-    private void createdDatePre() {
-        this.createdDate = new Date();
-        this.updatedDate = new Date();
-    }
+    @UpdateTimestamp
+    private LocalDateTime updatedDate;
 
     @Column(name = "updated_by")
     private String updatedBy;
 
     @Transient
-    private String experience_date;
+    private String experienceDate;
 
     @Transient
-    private String working_time;
+    private String workingTime;
 
     @Transient
-    private String team_alias;
+    private List<String> team_alias;
 
     @Transient
-    private String role_alias;
+    private List<String> role_alias;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<UserTeam> userTeams = new ArrayList<>();
@@ -100,4 +104,23 @@ public class User {
 
     @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL)
     private List<UserRole> userRoles = new ArrayList<>();
+
+    public Period getPeriodTime(LocalDateTime date) {
+        return Period.between(date.toLocalDate(), LocalDate.now());
+    }
+    public String getExperienceDateAsString() {
+        LocalDateTime university_graduate_date= getUniversityGraduateDate();
+        if(university_graduate_date == null){
+            return null;
+        }
+        return getPeriodTime(university_graduate_date).getYears() + " Years, " + getPeriodTime(university_graduate_date).getMonths() + " Months";
+    }
+
+    public String getWorkingTimeAsString(){
+        LocalDateTime joinedDate = getJoinedDate();
+        if(joinedDate == null){
+            return null;
+        }
+        return getPeriodTime(joinedDate).getYears() + " Years, " + getPeriodTime(joinedDate).getMonths() + " Months";
+    }
 }

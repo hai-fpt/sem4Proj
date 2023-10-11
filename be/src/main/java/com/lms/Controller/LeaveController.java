@@ -1,9 +1,12 @@
 package com.lms.controller;
 
-import com.lms.dto.LeaveDTO;
+import com.lms.dto.Leave;
+import com.lms.dto.projection.LeaveProjection;
+import com.lms.exception.DuplicateException;
 import com.lms.exception.NotFoundByIdException;
-import com.lms.models.Leave;
-import com.lms.service.LeaveServiceImpl;
+import com.lms.service.LeaveService;
+import com.lms.utils.ControllerUtils;
+import com.lms.utils.ProjectionMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,72 +21,71 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/leave")
 public class LeaveController {
-    private final LeaveServiceImpl leaveServiceImpl;
-
-    private final ControllerUtils controllerUtils;
 
     @Autowired
-    public LeaveController(LeaveServiceImpl leaveServiceImpl, ControllerUtils controllerUtils) {
-        this.leaveServiceImpl = leaveServiceImpl;
+    private final LeaveService leaveService;
+
+    @Autowired
+    private final ControllerUtils controllerUtils;
+
+    public LeaveController(LeaveService leaveService, ControllerUtils controllerUtils) {
+        this.leaveService = leaveService;
         this.controllerUtils = controllerUtils;
     }
 
     @GetMapping()
-    public ResponseEntity<Page<Leave>> getAllLeaves(@PageableDefault(page = 0, size = 10)Pageable pageable){
+    public ResponseEntity<Page<LeaveProjection>> getAllLeaves(@PageableDefault(page = 0, size = 10)Pageable pageable){
         Pageable sorted = controllerUtils.sortPage(pageable, "updatedDate");
-        Page<Leave> leaves = leaveServiceImpl.getAllLeaves(sorted);
+        Page<LeaveProjection> leaves = leaveService.getAllLeaves(sorted);
         return ResponseEntity.ok(leaves);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity getLeaveById(@PathVariable("id") Long id){
+    public ResponseEntity<LeaveProjection> getLeaveById(@PathVariable("id") Long id){
         if (Objects.isNull(id) || id < 0){
-                String message = "Id invalid";
-                ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+            throw new NullPointerException("Id invalid");
         }
-        Optional<Leave> leave = leaveServiceImpl.findLeaveById(id);
-        return leave.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        Optional<com.lms.models.Leave> leaveOptional = leaveService.findLeaveById(id);
+        com.lms.models.Leave leave = leaveOptional.get();
+        LeaveProjection leaveProjection = ProjectionMapper.mapToLeaveProjection(leave);
+        return ResponseEntity.status(HttpStatus.OK).body(leaveProjection);
     }
 
     @PostMapping()
-    public ResponseEntity createLeave(@RequestBody LeaveDTO leave){
+    public ResponseEntity<LeaveProjection> createLeave(@RequestBody Leave leave) throws DuplicateException {
         if (Objects.isNull(leave)){
-            String message = "Leave invalid";
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+            throw new NullPointerException("Leave invalid");
         }
         if (leave.getName().isEmpty()){
-            String message = "Name invalid";
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+            throw new NullPointerException("Name invalid");
         }
-        Leave newLeave = leaveServiceImpl.createLeave(leave);
-        return ResponseEntity.status(HttpStatus.CREATED).body(newLeave);
+        com.lms.models.Leave newLeave = leaveService.createLeave(leave);
+        LeaveProjection leaveProjection = ProjectionMapper.mapToLeaveProjection(newLeave);
+        return ResponseEntity.status(HttpStatus.CREATED).body(leaveProjection);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity updateLeave(@PathVariable("id") Long id, @RequestBody LeaveDTO leave) throws NotFoundByIdException {
+    public ResponseEntity<LeaveProjection> updateLeave(@PathVariable("id") Long id, @RequestBody Leave leave) throws DuplicateException, NotFoundByIdException {
         if(Objects.isNull(id) || id < 0){
-            String message = "Id invalid";
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+            throw new NullPointerException("Id invalid");
         }
         if (Objects.isNull(leave)){
-            String message = "Leave invalid";
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+            throw new NullPointerException("Leave invalid");
         }
         if(leave.getName().isEmpty()){
-            String message = "Name invalid";
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+            throw new NullPointerException("Name invalid");
         }
-        Leave updateLeave = leaveServiceImpl.updateLeave(id, leave);
-        return ResponseEntity.ok(updateLeave);
+        com.lms.models.Leave updateLeave = leaveService.updateLeave(id, leave);
+        LeaveProjection leaveProjection = ProjectionMapper.mapToLeaveProjection(updateLeave);
+        return ResponseEntity.ok(leaveProjection);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity deleteLeave(@PathVariable("id") Long id){
         if(Objects.isNull(id) || id < 0){
-            String message = "Id invalid";
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+            throw new NullPointerException("Id invalid");
         }
-        leaveServiceImpl.deleteLeave(id);
+        leaveService.deleteLeave(id);
         return ResponseEntity.status(HttpStatus.OK).body(true);
     }
 }

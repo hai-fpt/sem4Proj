@@ -5,8 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.data.annotation.LastModifiedBy;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -28,18 +32,12 @@ public class Leave {
     private String description;
 
     @Column(name = "created_date", nullable = false, updatable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date createdDate;
+    @CreationTimestamp
+    private LocalDateTime createdDate;
 
     @Column(name = "updated_date")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date updatedDate;
-
-    @PrePersist
-    private void createdDatePre() {
-        this.createdDate = new Date();
-        this.updatedDate = new Date();
-    }
+    @UpdateTimestamp
+    private LocalDateTime updatedDate;
 
     @Column(name = "updated_by")
     private String updatedBy;
@@ -47,4 +45,7 @@ public class Leave {
     @OneToMany(mappedBy = "leave")
     @JsonIgnore
     private List<UserLeave> userLeaves = new ArrayList<>();
+
+    @Column(name = "affects_days_off")
+    private boolean affectsDaysOff;
 }

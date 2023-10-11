@@ -1,7 +1,6 @@
 package com.lms.controller;
 
-import com.lms.dto.RoleDTO;
-import com.lms.models.Role;
+import com.lms.dto.Role;
 import com.lms.service.RoleServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -23,27 +22,27 @@ public class RoleController {
     }
 
     @GetMapping()
-    public ResponseEntity<Page<Role>> getAllRoles(@PageableDefault(page = 0, size = 10)Pageable pageable){
-        Page<Role> roles = roleServiceImpl.getAllRoles(pageable);
+    public ResponseEntity<Page<com.lms.models.Role>> getAllRoles(@PageableDefault(page = 0, size = 10)Pageable pageable){
+        Page<com.lms.models.Role> roles = roleServiceImpl.getAllRoles(pageable);
         return ResponseEntity.ok(roles);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Role> getRoleById(@PathVariable("id") Long id){
-        Optional<Role> role = roleServiceImpl.findRoleById(id);
+    public ResponseEntity<com.lms.models.Role> getRoleById(@PathVariable("id") Long id){
+        Optional<com.lms.models.Role> role = roleServiceImpl.findRoleById(id);
         return role.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
     }
 
     @PostMapping()
-    public  ResponseEntity<Role> createRole(@RequestBody RoleDTO role){
-        Role newRole = roleServiceImpl.createRole(role);
+    public  ResponseEntity<com.lms.models.Role> createRole(@RequestBody Role role){
+        com.lms.models.Role newRole = roleServiceImpl.createRole(role);
         return ResponseEntity.status(HttpStatus.CREATED).body(newRole);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Role> updateRole(@PathVariable("id") Long id, @RequestBody RoleDTO role){
+    public ResponseEntity<com.lms.models.Role> updateRole(@PathVariable("id") Long id, @RequestBody Role role){
         role.setId(id);
-        Role updateRole = roleServiceImpl.updateRole(role);
+        com.lms.models.Role updateRole = roleServiceImpl.updateRole(role);
         return ResponseEntity.ok(updateRole);
     }
 

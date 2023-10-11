@@ -1,12 +1,10 @@
 package com.lms.controller;
 
-import com.lms.dto.LeaveApprovalDTO;
-import com.lms.models.LeaveApproval;
+import com.lms.dto.LeaveApproval;
+import com.lms.dto.projection.LeaveApprovalProjection;
 import com.lms.models.User;
-import com.lms.service.LeaveApprovalService;
-import com.lms.service.LeaveApprovalServiceImpl;
-import com.lms.service.UserService;
-import com.lms.service.UserServiceImpl;
+import com.lms.models.UserLeave;
+import com.lms.service.*;
 import com.lms.utils.ControllerUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.data.domain.Page;
@@ -21,39 +19,41 @@ import java.util.Optional;
 @RequestMapping("/api")
 public class LeaveApprovalController {
     private final LeaveApprovalService leaveApprovalService;
+    private final UserLeaveService userLeaveService;
     private final UserService userService;
     private final ControllerUtils controllerUtils;
 
-    public LeaveApprovalController(LeaveApprovalService leaveApprovalService, UserService userService, ControllerUtils controllerUtils) {
+    public LeaveApprovalController(LeaveApprovalService leaveApprovalService, UserLeaveService userLeaveService, UserService userService, ControllerUtils controllerUtils) {
         this.leaveApprovalService = leaveApprovalService;
+        this.userLeaveService = userLeaveService;
         this.userService = userService;
         this.controllerUtils = controllerUtils;
     }
 
     @PutMapping("/leave/status_update")
     @Operation(summary = "Update leave approval tickets",
-            description = "Payload include leave approval id, changed status, user id")
-    public ResponseEntity<LeaveApproval> updateLeaveApprovalStatus(@RequestBody LeaveApprovalDTO leaveApprovalDTO) {
-        Optional<LeaveApproval> leaveApprovalOptional = leaveApprovalService.getLeaveApprovalById(leaveApprovalDTO.getId());
-        if (leaveApprovalOptional.isEmpty()) {
+            description = "Payload include user leave approval id, changed status, user id")
+    public ResponseEntity<LeaveApprovalProjection> updateLeaveApprovalStatus(@RequestBody LeaveApproval leaveApprovalDTO) {
+        Optional<UserLeave> userLeaveOptional = userLeaveService.getUserLeaveById(leaveApprovalDTO.getId());
+        if (userLeaveOptional.isEmpty()) {
             throw new NullPointerException("Leave ticket does not exists");
         }
         if (!controllerUtils.validateRequestedUser(leaveApprovalDTO.getRequestedByEmail())) {
             throw new NullPointerException("Email " + leaveApprovalDTO.getRequestedByEmail() + " not found");
         }
-        LeaveApproval leaveApproval = leaveApprovalService.updateLeaveApprovalStatus(leaveApprovalDTO);
+        LeaveApprovalProjection leaveApproval = leaveApprovalService.updateLeaveApprovalStatus(leaveApprovalDTO);
         return ResponseEntity.ok(leaveApproval);
     }
 
     @GetMapping("/leave/approval/{id}")
     @Operation(summary = "Get leave approvals by manager id", description = "Payload include manager id as param")
-    public ResponseEntity<Page<LeaveApproval>> getLeaveApprovalByManagerId(@PathVariable("id") Long id, @PageableDefault(size = 10) Pageable pageable) {
+    public ResponseEntity<Page<LeaveApprovalProjection>> getLeaveApprovalByManagerId(@PathVariable("id") Long id, @PageableDefault(size = 10) Pageable pageable) {
         Optional<User> user = userService.getUserById(id);
         if (user.isEmpty()) {
             throw new NullPointerException("User Id not found");
         }
         Pageable sortedPageable = controllerUtils.sortPage(pageable, "updatedDate");
-        Page<LeaveApproval> leaveApprovals = leaveApprovalService.getLeaveApproveByManagerId(id, sortedPageable);
+        Page<LeaveApprovalProjection> leaveApprovals = leaveApprovalService.getLeaveApproveByManagerId(id, sortedPageable);
         return ResponseEntity.ok(leaveApprovals);
     }
 }

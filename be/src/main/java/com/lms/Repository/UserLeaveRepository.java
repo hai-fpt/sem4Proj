@@ -1,5 +1,7 @@
 package com.lms.repository;
 
+import com.lms.dto.ApprovalStatus;
+import com.lms.dto.projection.UserLeaveProjection;
 import com.lms.models.User;
 import com.lms.models.UserLeave;
 import org.springframework.data.domain.Page;
@@ -9,32 +11,37 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
 @Repository
 public interface UserLeaveRepository extends JpaRepository<UserLeave, Long> {
-    Page<UserLeave> findUserLeaveByUser(User user, Pageable pageable);
+    Page<UserLeaveProjection> findAllProjectedBy(Pageable pageable);
 
-    Page<UserLeave> findUserLeaveByFromDate(Date date, Pageable pageable);
+    Page<UserLeaveProjection> findUserLeaveByUser(User user, Pageable pageable);
+
+    Page<UserLeaveProjection> findUserLeaveByFromDate(LocalDateTime date, Pageable pageable);
 
     @Query("select ul from UserLeave ul " +
             "join ul.user u " +
             "join u.userTeams ut " +
             "join ut.team t " +
             "where t.manager.id = :id")
-    Page<UserLeave> getUserLeaveByTeam(@Param("id") Long id, Pageable pageable);
+    Page<UserLeaveProjection> getUserLeaveByTeam(@Param("id") Long id, Pageable pageable);
+
+    @Query("select ul from UserLeave ul " +
+            "join ul.user u " +
+            "join u.userTeams ut " +
+            "join ut.team t " +
+            "where t.manager.id = :id")
+    List<UserLeave> getUserLeaveByTeam(@Param("id") Long id);
 
     @Query("select ul from UserLeave ul where :date between ul.fromDate and ul.toDate")
-    Page<UserLeave> findUserLeaveByDate(Date date, Pageable pageable);
+    Page<UserLeaveProjection> findUserLeaveByDate(LocalDateTime date, Pageable pageable);
 
-    @Query(value = "select * from user_leave ul " +
-            "where extract(month from ul.from_date) " +
-            "= extract(month from cast(:date as timestamp)) " +
-            "or extract(month from ul.to_date) " +
-            "= extract(month from cast(:date as timestamp))"
-            , nativeQuery = true)
-    Page<UserLeave> findUserLeaveByMonth(@Param("date") Date date, Pageable pageable);
+    @Query("SELECT ul FROM UserLeave ul WHERE ul.fromDate <= :endDate AND ul.toDate >= :startDate")
+    Page<UserLeaveProjection> findUserLeavesBetweenDates(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
 
-    List<UserLeave> findUserLeaveByUserIdAndStatus(Long id, int status);
+    List<UserLeaveProjection> findUserLeaveByUserIdAndStatusAndAndLeave_AffectsDaysOff(Long id, ApprovalStatus status, boolean affect);
 }
