@@ -11,3 +11,5 @@ docker-compose up -d
 ```
 - Flyway: change latest sql. Input appropriate host address and google client ID.
 
+## Swagger
+http://localhost:9000/swagger-ui/index.html

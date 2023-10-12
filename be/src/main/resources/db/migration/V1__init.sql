@@ -1,5 +1,3 @@
-CREATE DATABASE IF NOT EXISTS lms;
--- INIT TABLES STRUCTURE FOR LEAVE MANAGEMENT SYSTEM
 CREATE TABLE LEAVE (id BIGSERIAL PRIMARY KEY,
                     name varchar(255),
                     description varchar(255),
