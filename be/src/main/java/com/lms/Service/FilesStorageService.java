@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 public interface FilesStorageService {
 	void init();
 
-	List<FileInfo> saveToStorage(MultipartFile[] file, String subdirectory, String requestedByEmail) throws IOException;
+	List<FileInfo> saveToStorage(MultipartFile[] file, String subdirectory, String updatedBy) throws IOException;
 
 	List<FileStorage> saveToDatabase(List<FileInfo> files, UserLeave leaveRequest);
 

@@ -1,10 +1,8 @@
 package com.lms.controller;
 
-import com.lms.dto.ChangeUserStatus;
-import com.lms.dto.DateRange;
-import com.lms.dto.ResponseMessageDTO;
-import com.lms.dto.User;
+import com.lms.dto.*;
 import com.lms.dto.projection.UserProjection;
+import com.lms.exception.NotFoundByIdException;
 import com.lms.helper.ExcelHelper;
 import com.lms.models.UserTeam;
 import com.lms.service.UserService;
@@ -18,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,10 +24,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.security.RolesAllowed;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.*;
+
+import static com.lms.utils.Constants.*;
 
 @RestController
 @RequestMapping("/api")
@@ -43,6 +46,7 @@ public class UserController {
     }
 
     @GetMapping("/user")
+//    @RolesAllowed(value = "ADMIN")
     public ResponseEntity<Page<UserProjection>> getAllUsers(@PageableDefault(page = 0, size = 10) Pageable pageable) {
         Pageable sorted = controllerUtils.sortPage(pageable, "updatedDate");
         Page<UserProjection> projections = userServiceImpl.getAllUsers(sorted);
@@ -57,12 +61,15 @@ public class UserController {
             UserProjection projection = ProjectionMapper.mapToUserProjection(foundUser);
             return ResponseEntity.ok(projection);
         }
-        throw new NullPointerException("User with id " + id + " does not exists");
+        throw new NullPointerException(USER_NOT_EXISTS);
     }
 
     @GetMapping("/user/user_between_dates")
     @Operation(summary = "List users between 2 dates", description = "Payload include startDate and endDate, format: YYYY-MM-DD")
-    public ResponseEntity<Page<UserProjection>> getUserCreatedBetweenDates(@RequestBody DateRange dateRange, @PageableDefault(size = 10) Pageable pageable) {
+    public ResponseEntity<Page<UserProjection>> getUserCreatedBetweenDates(@RequestParam @DateTimeFormat(pattern = JSON_VIEW_DATE_FORMAT) LocalDateTime fromDateStr,
+                                                                           @RequestParam @DateTimeFormat(pattern = JSON_VIEW_DATE_FORMAT) LocalDateTime toDateStr,
+                                                                           @PageableDefault(size = 10) Pageable pageable) {
+        DateRange dateRange = new DateRange(fromDateStr, toDateStr, null);
         Pageable sorted = controllerUtils.sortPage(pageable, "updatedDate");
         Page<UserProjection> users = userServiceImpl.getUserCreatedBetweenDates(dateRange.getStartDate(), dateRange.getEndDate(), sorted);
         return ResponseEntity.ok(users);
@@ -72,7 +79,7 @@ public class UserController {
     @Operation(summary = "Retrieve team associated with provided user Id")
     public ResponseEntity<Page<UserTeam>> getUserTeam(@PathVariable("id") Long id, @PageableDefault(size = 10) Pageable pageable) {
         if (!controllerUtils.validateRequestedUser(id)) {
-            throw new NullPointerException("User with id " + id + " does not exists");
+            throw new NullPointerException(USER_NOT_EXISTS);
         }
         Pageable sorted = controllerUtils.sortPage(pageable, "updatedDate");
         com.lms.models.User user = userServiceImpl.getUserById(id).get();
@@ -85,7 +92,7 @@ public class UserController {
             description = "Payload include id, which would be the logged in user's id")
     public ResponseEntity<Page<UserProjection>> getUserByRole(@RequestParam Long id, @PageableDefault(size = 10) Pageable pageable) {
         if (!controllerUtils.validateRequestedUser(id)) {
-            throw new NullPointerException("User with id " + id + " does not exists");
+            throw new NullPointerException(USER_NOT_EXISTS);
         }
         Pageable sorted = controllerUtils.sortPage(pageable, "updatedDate");
         com.lms.models.User user = userServiceImpl.getUserById(id).get();
@@ -95,18 +102,18 @@ public class UserController {
 
     @PostMapping("/user")
     public ResponseEntity<UserProjection> createUser(@RequestBody User user) {
-        user.setRank(User.RankEnum.EMPLOYEE);
+        user.setRank(RankEnum.EMPLOYEE);
         UserProjection newUser = userServiceImpl.createUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
     }
 
     @PutMapping("/user/{id}")
     public ResponseEntity<UserProjection> updateUser(@PathVariable("id") Long id, @RequestBody User user) {
-        if (!controllerUtils.validateRequestedUser(user.getRequestedByEmail())) {
-            throw new NullPointerException("Email " + user.getRequestedByEmail() + " does not exists");
+        if (!controllerUtils.validateRequestedUser(user.getUpdatedBy())) {
+            throw new NullPointerException(EMAIL_NOT_EXISTS);
         }
         if (!controllerUtils.validateRequestedUser(id)) {
-            throw new NullPointerException("User with id " + id + " does not exists");
+            throw new NullPointerException(USER_NOT_EXISTS);
         }
         user.setId(id);
         UserProjection updateUser = userServiceImpl.updateUser(user);
@@ -114,13 +121,13 @@ public class UserController {
     }
 
     @PutMapping("/user/status/{id}")
-    @Operation(summary = "Change the user status", description = "Payload include bool status, and email of logged in user requestedByEmail")
+    @Operation(summary = "Change the user status", description = "Payload include bool status, and email of logged in user updatedBy")
     public ResponseEntity<UserProjection> changeStatus(@PathVariable("id") Long id, @RequestBody ChangeUserStatus statusDTO) {
         if (!controllerUtils.validateRequestedUser(id)) {
-            throw new NullPointerException("User with id " + id + " does not exists");
+            throw new NullPointerException(USER_NOT_EXISTS);
         }
-        if (!controllerUtils.validateRequestedUser(statusDTO.getRequestedByEmail())) {
-            throw new NullPointerException("Email " + statusDTO.getRequestedByEmail() + " does not exists");
+        if (!controllerUtils.validateRequestedUser(statusDTO.getUpdatedBy())) {
+            throw new NullPointerException(EMAIL_NOT_EXISTS);
         }
         UserProjection updatedUser = userServiceImpl.changeStatus(id, statusDTO);
         return ResponseEntity.ok(updatedUser);
@@ -129,7 +136,7 @@ public class UserController {
     @DeleteMapping("/user/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable("id") Long id) {
         if (!controllerUtils.validateRequestedUser(id)) {
-            throw new NullPointerException("User with id " + id + " does not exists");
+            throw new NullPointerException(USER_NOT_EXISTS);
         }
         userServiceImpl.deleteUser(id);
         return ResponseEntity.noContent().build();
@@ -146,21 +153,16 @@ public class UserController {
     }
 
     @PostMapping("/user/import")
-    public ResponseEntity<ResponseMessageDTO> uploadFile(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<ResponseMessageDTO> uploadFile(@RequestParam("file") MultipartFile file){
         String message = "";
 
         //Validate excel
         if (ExcelHelper.hasExcelFormat(file)) {
-            try {
-                userServiceImpl.saveExcel(file);
-                message = "Uploaded the file successfully: " + file.getOriginalFilename();
-                return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessageDTO(message));
-            } catch (Exception e) {
-                message = "Could not upload the file: " + file.getOriginalFilename() + " " + "because" + " " + e.getMessage() + "!";
-                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(new ResponseMessageDTO(message));
-            }
+            userServiceImpl.saveExcel(file);
+            message = FILE_UPLOAD_SUCCESS + ": " + file.getOriginalFilename();
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseMessageDTO(message));
         }
-        message = "Please upload an excel file!";
+        message = INVALID_FILE_UPLOAD;
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ResponseMessageDTO(message));
     }
 
@@ -168,5 +170,24 @@ public class UserController {
     public ResponseEntity<Page<UserProjection>> searchUser(@RequestParam(value = "keyword") String keyword, @PageableDefault(size = 10) Pageable pageable) {
         Pageable sorted = controllerUtils.sortPage(pageable, "updatedDate");
         return ResponseEntity.ok(userServiceImpl.searchUser(keyword, sorted));
+    }
+
+    @PutMapping("/user/my profile/{id}")
+    public ResponseEntity<UserProjection> updateMyProfile(@PathVariable("id") Long id, @RequestBody MyProfile myProfile) throws NotFoundByIdException {
+        if (Objects.isNull(id) || id < 0) {
+            throw new NullPointerException(INVALID_ID);
+        }
+        if (Objects.isNull(myProfile)) {
+            throw new NullPointerException(INVALID_PAYLOAD);
+        }
+        if (myProfile.getName().isEmpty()) {
+            throw new NullPointerException(INVALID_NAME);
+        }
+        if (myProfile.getPhone().isEmpty()) {
+            throw new NullPointerException(INVALID_PAYLOAD);
+        }
+        com.lms.models.User user = userServiceImpl.updateMyProflie(id, myProfile);
+        UserProjection userProjection = ProjectionMapper.mapToUserProjection(user);
+        return ResponseEntity.status(HttpStatus.OK).body(userProjection);
     }
 }

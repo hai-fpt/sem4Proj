@@ -2,12 +2,15 @@ package com.lms.models;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.lms.dto.RankEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -24,7 +27,7 @@ import java.util.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
+public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,13 +52,6 @@ public class User {
     private LocalDateTime universityGraduateDate;
 
     private String skills;
-
-    public enum RankEnum {
-        SENIOR_MANAGER,
-        MANAGER,
-        ASSISTANT_MANAGER,
-        EMPLOYEE
-    }
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
@@ -102,25 +98,65 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<UserLeave> userLeaves = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", orphanRemoval = true, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<UserRole> userRoles = new ArrayList<>();
 
-    public Period getPeriodTime(LocalDateTime date) {
-        return Period.between(date.toLocalDate(), LocalDate.now());
-    }
     public String getExperienceDateAsString() {
-        LocalDateTime university_graduate_date= getUniversityGraduateDate();
-        if(university_graduate_date == null){
-            return null;
-        }
-        return getPeriodTime(university_graduate_date).getYears() + " Years, " + getPeriodTime(university_graduate_date).getMonths() + " Months";
+        return getPeriod(getUniversityGraduateDate());
     }
 
-    public String getWorkingTimeAsString(){
-        LocalDateTime joinedDate = getJoinedDate();
-        if(joinedDate == null){
-            return null;
+    public String getWorkingTimeAsString() {
+        return getPeriod(getJoinedDate());
+    }
+
+    public <T> String getPeriod(T date){
+        LocalDateTime joined = (LocalDateTime) date;
+        if(date != null){
+            Period time = Period.between(joined.toLocalDate(), LocalDate.now());
+            return time.getYears() + " Years, " + time.getMonths() + " Months";
         }
-        return getPeriodTime(joinedDate).getYears() + " Years, " + getPeriodTime(joinedDate).getMonths() + " Months";
+        return null;
+    }
+
+    @Override
+    @Transient
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return null;
+    }
+
+    @Override
+    @Transient
+    public String getPassword() {
+        return null;
+    }
+
+    @Override
+    @Transient
+    public String getUsername() {
+        return this.getEmail();
+    }
+
+    @Override
+    @Transient
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    @Transient
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    @Transient
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    @Transient
+    public boolean isEnabled() {
+        return true;
     }
 }

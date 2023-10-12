@@ -60,6 +60,7 @@ public class LeaveServiceImpl implements LeaveService{
         com.lms.models.Leave leaveEntity = leaveOptional.get();
         leaveEntity.setName(leave.getName());
         leaveEntity.setDescription(leave.getDescription());
+        leaveEntity.setAffectsDaysOff(leave.getAffectsDaysOff());
         return leaveRepository.save(leaveEntity);
     }
 

@@ -11,14 +11,15 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 @Repository
 public interface HolidayRepository extends JpaRepository<Holiday, Long> {
-    Holiday findHolidayByNameAndFromDateAndToDate (String name, Date fromDate, Date toDate);
+    Holiday findHolidayByNameAndFromDateAndToDate (String name, LocalDateTime fromDate, LocalDateTime toDate);
 
-    Holiday findHolidayByIdNotAndNameAndFromDateAndToDate (Long id, String name, Date fromDate, Date toDate);
+    Holiday findHolidayByIdNotAndNameAndFromDateAndToDate (Long id, String name, LocalDateTime fromDate, LocalDateTime toDate);
 
     Page<HolidayProjection> findAllProjectedBy(Pageable pageable);
     @Query("select h from Holiday h where extract(year from h.fromDate) = :year ")
-    Page<Holiday> findByYear(@Param("year") int year, Pageable pageable);
+    List<Holiday> findByYear(@Param("year") int year);
 }

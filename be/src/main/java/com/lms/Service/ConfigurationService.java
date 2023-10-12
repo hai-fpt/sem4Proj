@@ -9,4 +9,8 @@ public interface ConfigurationService {
 
 	ConfigurationInfo getConfiguration();
 
+	String getGoogleClientId();
+
+	String getHostAddress();
+
 }

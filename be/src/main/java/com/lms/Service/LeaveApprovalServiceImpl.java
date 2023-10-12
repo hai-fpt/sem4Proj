@@ -1,11 +1,9 @@
 package com.lms.service;
 
-import com.lms.dto.ApprovalStatus;
-import com.lms.dto.LeaveApproval;
-import com.lms.dto.LeaveProcess;
-import com.lms.dto.User;
+import com.lms.dto.*;
 import com.lms.dto.projection.LeaveApprovalProjection;
 import com.lms.exception.InvalidReceiverException;
+import com.lms.exception.NotFoundByIdException;
 import com.lms.models.UserLeave;
 import com.lms.repository.LeaveApprovalRepository;
 import com.lms.repository.UserLeaveRepository;
@@ -18,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -30,13 +29,20 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService{
     private final UserLeaveRepository userLeaveRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final ConfigurationService configurationService;
+
+    private final NotificationService notificationService;
 
 
-    public LeaveApprovalServiceImpl(LeaveApprovalRepository leaveApprovalRepository, UserLeaveRepository userLeaveRepository, UserRepository userRepository, EmailService emailService) {
+    public LeaveApprovalServiceImpl(LeaveApprovalRepository leaveApprovalRepository,
+                                    UserLeaveRepository userLeaveRepository, UserRepository userRepository,
+                                    EmailService emailService, ConfigurationService configurationService, NotificationServiceImpl notificationServiceImpl) {
         this.leaveApprovalRepository = leaveApprovalRepository;
         this.userLeaveRepository = userLeaveRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
+        this.configurationService = configurationService;
+        this.notificationService = notificationServiceImpl;
     }
 
     @Override
@@ -50,23 +56,21 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService{
     }
 
     @Override
-    public LeaveApprovalProjection updateLeaveApprovalStatus(LeaveApproval leaveApprovalDTO) {
-        Optional<com.lms.models.LeaveApproval> leaveApprovalSearch = leaveApprovalRepository.findById(leaveApprovalDTO.getId());
-        com.lms.models.LeaveApproval leaveApproval = leaveApprovalSearch.get();
+    public Optional<com.lms.models.LeaveApproval> getLeaveApprovalByManagerId(Long id, Long managerId) {
+        return leaveApprovalRepository.findByIdAndManagerId(id, managerId);
+    }
+
+    @Override
+    public LeaveApproval updateLeaveApprovalStatus(LeaveApproval leaveApprovalDTO) throws NotFoundByIdException {
+        Optional<com.lms.models.LeaveApproval> leaveApprovalOptional = leaveApprovalRepository.findByIdAndManagerId(leaveApprovalDTO.getId(), leaveApprovalDTO.getManagerId());
+        com.lms.models.LeaveApproval leaveApproval = leaveApprovalOptional.get();
         leaveApproval.setStatus(leaveApprovalDTO.getStatus());
-        leaveApproval.setUpdatedBy(leaveApprovalDTO.getRequestedByEmail());
+        leaveApproval.setUpdatedBy(leaveApprovalDTO.getUpdatedBy());
         com.lms.models.LeaveApproval savedEntity = leaveApprovalRepository.save(leaveApproval);
+        com.lms.models.User user = leaveApproval.getManagerId();
 
-        LeaveApprovalProjection projection = ProjectionMapper.mapToLeaveApprovalProjection(savedEntity);
-
-        Optional<com.lms.models.User> userOptional = userRepository.findById(leaveApproval.getManagerId());
-        if (userOptional.isEmpty()) {
-            throw new NullPointerException("Manager does not exists");
-        }
-        com.lms.models.User user = userOptional.get();
-        ModelMapper modelMapper = new ModelMapper();
-        User userDTO = modelMapper.map(user, User.class);
-
+        User userDTO = new User();
+        userDTO.setName(user.getName());
         LeaveProcess leaveProcess = new LeaveProcess();
         leaveProcess.setStatus(leaveApproval.getStatus());
         leaveProcess.setProcessBy(userDTO);
@@ -78,25 +82,46 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService{
             throw new RuntimeException(e);
         }
 
+        //push notification
+        List<NotificationInfo> notiInfos = new ArrayList<>();
+        NotificationInfo notificationInfo = new NotificationInfo();
+        com.lms.models.User manager = leaveApproval.getManagerId();
+        UserLeave userLeave = leaveApproval.getUserLeave();
+        com.lms.models.User employee = userLeave.getUser();
+
+        notificationInfo.setSenderId(manager.getId());
+        notificationInfo.setSenderName(manager.getName());
+        notificationInfo.setSenderEmail(manager.getEmail());
+        notificationInfo.setReceiverId(employee.getId());
+        notificationInfo.setReceiverName(employee.getName());
+        notificationInfo.setReceiverEmail(employee.getEmail());
+        notificationInfo.setStatus(leaveApproval.getStatus());
+        notificationInfo.setLeaveFrom(userLeave.getFromDate());
+        notificationInfo.setLeaveTo(userLeave.getToDate());
+        notificationService.pushNotification(notiInfos);
+
+//        update final status to user_leave(approved/rejected)
         userLeaveUpdate(leaveApproval);
 
-        return projection;
+        return leaveApprovalDTO;
     }
 
     @Override
-    public void userLeaveUpdate(com.lms.models.LeaveApproval leaveApproval) {
-        Page<LeaveApprovalProjection> approvals = leaveApprovalRepository.findByUserLeave_Id(leaveApproval.getUserLeave().getId(), PageRequest.of(0, 10));
-        List<Long> managerIds = approvals.stream().map(approval -> approval.getManagerId()).collect(Collectors.toList());
+    public void userLeaveUpdate(com.lms.models.LeaveApproval leaveApproval) throws NotFoundByIdException {
+        Page<com.lms.models.LeaveApproval> approvals = leaveApprovalRepository.findByUserLeave_Id(leaveApproval.getUserLeave().getId(), PageRequest.of(0, 10));
+        List<Long> managerIds =
+                approvals.stream().map(approval -> approval.getManagerId().getId()).collect(Collectors.toList());
         List<com.lms.models.User> managers = userRepository.findAllById(managerIds);
         ModelMapper modelMapper = new ModelMapper();
         List<User> managerDTOs = managers.stream()
                 .map(manager -> {
+                    manager.setUserRoles(null);
                     User managerDTO = modelMapper.map(manager, User.class);
                     return managerDTO;
                 })
                 .collect(Collectors.toList());
         if (leaveApproval.getStatus().equals(ApprovalStatus.APPROVED)) {
-            for (LeaveApprovalProjection approval : approvals) {
+            for (com.lms.models.LeaveApproval approval : approvals) {
                 if (approval.getStatus() != ApprovalStatus.APPROVED) {
                     break;
                 }
@@ -104,8 +129,26 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService{
                 if (userLeave.isPresent()) {
                     UserLeave updatedLeave = userLeave.get();
                     updatedLeave.setStatus(ApprovalStatus.APPROVED);
-                    userLeaveRepository.save(updatedLeave);
-                    //TODO: Overall approve
+                    UserLeave savedUserLeave = userLeaveRepository.save(updatedLeave);
+
+                    //push notification for overall approve
+                    List<NotificationInfo> notiInfos = new ArrayList<>();
+                    NotificationInfo notificationInfo = new NotificationInfo();
+                    com.lms.models.User manager = leaveApproval.getManagerId();
+                    com.lms.models.User employee = savedUserLeave.getUser();
+
+                    notificationInfo.setSenderId(manager.getId());
+                    notificationInfo.setSenderName(manager.getName());
+                    notificationInfo.setSenderEmail(manager.getEmail());
+                    notificationInfo.setReceiverId(employee.getId());
+                    notificationInfo.setReceiverName(employee.getName());
+                    notificationInfo.setReceiverEmail(employee.getEmail());
+                    notificationInfo.setStatus(leaveApproval.getStatus());
+                    notificationInfo.setLeaveFrom(savedUserLeave.getFromDate());
+                    notificationInfo.setLeaveTo(savedUserLeave.getToDate());
+                    notificationService.pushNotification(notiInfos);
+
+                    //Email for overall approved
                     LeaveProcess leaveProcess = new LeaveProcess();
                     leaveProcess.setStatus(leaveApproval.getStatus());
                     leaveProcess.setProcessBys(managerDTOs);
@@ -125,8 +168,26 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService{
             if (userLeave.isPresent()) {
                 UserLeave updatedLeave = userLeave.get();
                 updatedLeave.setStatus(ApprovalStatus.REJECTED);
-                userLeaveRepository.save(updatedLeave);
-                //TODO: Overall reject
+                UserLeave savedUserLeave = userLeaveRepository.save(updatedLeave);
+
+                //push notification for overall reject
+                List<NotificationInfo> notiInfos = new ArrayList<>();
+                NotificationInfo notificationInfo = new NotificationInfo();
+                com.lms.models.User manager = leaveApproval.getManagerId();
+                com.lms.models.User employee = savedUserLeave.getUser();
+
+                notificationInfo.setSenderId(manager.getId());
+                notificationInfo.setSenderName(manager.getName());
+                notificationInfo.setSenderEmail(manager.getEmail());
+                notificationInfo.setReceiverId(employee.getId());
+                notificationInfo.setReceiverName(employee.getName());
+                notificationInfo.setReceiverEmail(employee.getEmail());
+                notificationInfo.setStatus(leaveApproval.getStatus());
+                notificationInfo.setLeaveFrom(savedUserLeave.getFromDate());
+                notificationInfo.setLeaveTo(savedUserLeave.getToDate());
+                notificationService.pushNotification(notiInfos);
+
+                //Email for overall approved
                 LeaveProcess leaveProcess = new LeaveProcess();
                 leaveProcess.setStatus(leaveApproval.getStatus());
                 leaveProcess.setProcessBys(managerDTOs);

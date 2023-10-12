@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static com.lms.utils.Constants.*;
+
 @RestController
 @RequestMapping("/api/comment")
 public class LeaveCommentController {
@@ -42,24 +44,24 @@ public class LeaveCommentController {
 	@DeleteMapping()
 	public ResponseEntity<String> deleteComment(@RequestBody Long leaveId) {
 		commentService.deleteCommentById(leaveId);
-		return ResponseEntity.status(HttpStatus.OK).body("Comment has been deleted!");
+		return ResponseEntity.status(HttpStatus.OK).body(COMMENT_DELETE_SUCCESS);
 	}
 
 	@DeleteMapping("/deleteAllByLeaveId")
 	public ResponseEntity<String> deleteAllByLeaveId(@RequestBody Long leaveId) {
 		commentService.deleteAllCommentByLeaveId(leaveId);
-		return ResponseEntity.status(HttpStatus.OK).body("Comment has been deleted!");
+		return ResponseEntity.status(HttpStatus.OK).body(COMMENT_DELETE_SUCCESS);
 	}
 
 	private void validateInputData(LeaveCommentInfo comment) {
 		if (comment == null || StringUtils.isEmpty(comment.getComment()) || StringUtils.isEmpty(comment.getAuthor()))
-			throw new NullPointerException("Invalid input params");
+			throw new NullPointerException(INVALID_PAYLOAD);
 
 		if (!controllerUtils.validateRequestedUser(comment.getAuthor())) {
-			throw new NullPointerException("Email for: " + comment.getAuthor() + " not found");
+			throw new NullPointerException(EMAIL_NOT_EXISTS);
 		}
 		if (StringUtils.isNotEmpty(comment.getUpdatedBy()) &&!controllerUtils.validateRequestedUser(comment.getUpdatedBy())) {
-			throw new NullPointerException("Email for: " + comment.getUpdatedBy() + " not found");
+			throw new NullPointerException(EMAIL_NOT_EXISTS);
 		}
 	}
 

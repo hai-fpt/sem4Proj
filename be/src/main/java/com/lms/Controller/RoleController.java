@@ -1,7 +1,9 @@
 package com.lms.controller;
 
 import com.lms.dto.Role;
+import com.lms.dto.projection.RoleProjection;
 import com.lms.service.RoleServiceImpl;
+import com.lms.utils.ControllerUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,18 +14,21 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/role")
+@RequestMapping("/api/admin/role")
 public class RoleController {
     private final RoleServiceImpl roleServiceImpl;
+    private final ControllerUtils controllerUtils;
 
     @Autowired
-    public RoleController(RoleServiceImpl roleServiceImpl) {
+    public RoleController(RoleServiceImpl roleServiceImpl, ControllerUtils controllerUtils) {
         this.roleServiceImpl = roleServiceImpl;
+        this.controllerUtils = controllerUtils;
     }
 
     @GetMapping()
-    public ResponseEntity<Page<com.lms.models.Role>> getAllRoles(@PageableDefault(page = 0, size = 10)Pageable pageable){
-        Page<com.lms.models.Role> roles = roleServiceImpl.getAllRoles(pageable);
+    public ResponseEntity<Page<RoleProjection>> getAllRoles(@PageableDefault(page = 0, size = 10)Pageable pageable){
+        Pageable sorted = controllerUtils.sortPage(pageable, "updatedDate");
+        Page<RoleProjection> roles = roleServiceImpl.getAllRoles(sorted);
         return ResponseEntity.ok(roles);
     }
 

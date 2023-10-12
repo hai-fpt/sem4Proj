@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface HolidayService{
     Page<com.lms.models.Holiday> getAllHolidays(Pageable pageable);
 
+    Page<HolidayProjection> getAllHolidayProjection(Pageable pageable);
+
     Optional<com.lms.models.Holiday> findHolidayById(Long id) throws NotFoundByIdException;
 
     com.lms.models.Holiday createHoliday(Holiday holiday) throws DuplicateException;
@@ -19,5 +21,5 @@ public interface HolidayService{
 
     void deleteHoliday(Long id);
 
-    Page<com.lms.models.Holiday> getAllHolidaysByYear(int year, Pageable pageable);
+    Page<HolidayProjection> getAllHolidaysByYear(int year, Pageable pageable);
 }

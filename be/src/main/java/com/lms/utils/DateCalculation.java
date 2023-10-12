@@ -31,9 +31,8 @@ public class DateCalculation {
     public int holidaysCompensation(List<UserLeaveProjection> userLeaves, Page<Holiday> holidays, LocalDateTime fromDate, LocalDateTime toDate) {
         int compensation = 0;
         for (Holiday holiday : holidays) {
-            LocalDate holidayStart = holiday.getFromDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            LocalDate holidayEnd = holiday.getToDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-
+            LocalDate holidayStart = holiday.getFromDate().toLocalDate();
+            LocalDate holidayEnd = holiday.getToDate().toLocalDate();
             if (holidayStart.getYear() == fromDate.getYear() && holidayEnd.getYear() == toDate.getYear()) {
                 for (UserLeaveProjection leave : userLeaves) {
                     LocalDate leaveFrom = leave.getFromDate().toLocalDate();
@@ -70,7 +69,7 @@ public class DateCalculation {
             long weekendsBetween = calculateWeekendsBetween(rangeFrom.toLocalDate(), rangeTo.toLocalDate());
             totalDaysOff -= weekendsBetween;
         }
-        return 0;
+        return totalDaysOff;
     }
 
     public float calculateUsedDaysOff(List<UserLeaveProjection> userLeaves, LocalDateTime fromDate, LocalDateTime toDate) {
@@ -128,8 +127,8 @@ public class DateCalculation {
         long daysOff = ChronoUnit.DAYS.between(fromDate.toLocalDate(), toDate.toLocalDate());
 
         for (Holiday holiday : holidays) {
-            LocalDateTime holidayFrom = holiday.getFromDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-            LocalDateTime holidayTo = holiday.getToDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+            LocalDateTime holidayFrom = holiday.getFromDate();
+            LocalDateTime holidayTo = holiday.getToDate();
 
             if (fromDate.isBefore(holidayTo) && toDate.isAfter(holidayFrom)) {
                 LocalDateTime overlapFrom = fromDate.isBefore(holidayFrom) ? holidayFrom : fromDate;

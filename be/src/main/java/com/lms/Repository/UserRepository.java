@@ -1,6 +1,7 @@
 package com.lms.repository;
 
 import com.lms.dto.projection.UserProjection;
+import com.lms.models.Team;
 import com.lms.models.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,7 +11,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,4 +31,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "or u.id in (select ut.user.id from UserTeam ut join ut.team t " +
             "where lower(t.teamName) like %:keyword%)")
     Page<UserProjection> searchUser(@Param("keyword") String keyword, Pageable pageable);
+
+    @Query("select ut.team from UserTeam ut where ut.user.id = :userId")
+    List<Team> getTeamByUser(@Param("userId") Long id);
+
+    @Query("select r.name from UserRole ur join ur.role r where ur.user.id = :userId")
+    List<com.lms.models.Role.RoleEnum> getRolesOfUser(@Param("userId") Long id);
+
+    Optional<User> findUserByEmail(String email);
 }

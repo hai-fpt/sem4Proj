@@ -1,9 +1,11 @@
 package com.lms.advice;
 
+import com.lms.dto.ResponseMessageDTO;
 import com.lms.exception.DuplicateException;
 import com.lms.exception.NotFoundByIdException;
 import com.lms.exception.UnauthorizedException;
 import org.apache.tomcat.util.http.fileupload.impl.FileSizeLimitExceededException;
+import org.hibernate.HibernateException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -63,6 +65,7 @@ public class GlobalExceptionHandler {
 		);
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorMessage);
 	}
+
 	@ExceptionHandler(FileSizeLimitExceededException.class)
 	public ResponseEntity<ErrorMessage> handleSizeLimitExceededException(FileSizeLimitExceededException ex, WebRequest request) {
 		ex.printStackTrace();
@@ -105,4 +108,15 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
 	}
 
+	@ExceptionHandler(HibernateException.class)
+	public ResponseEntity<ErrorMessage> handleHibernateException(Exception ex, WebRequest request) {
+		ex.printStackTrace();
+		ErrorMessage errorMessage = new ErrorMessage(
+				HttpStatus.INTERNAL_SERVER_ERROR.value(),
+				new Date(),
+				ex.getMessage(),
+				request.getDescription(false)
+		);
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
+	}
 }

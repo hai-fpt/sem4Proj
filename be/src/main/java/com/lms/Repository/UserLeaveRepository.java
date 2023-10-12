@@ -19,7 +19,7 @@ import java.util.List;
 public interface UserLeaveRepository extends JpaRepository<UserLeave, Long> {
     Page<UserLeaveProjection> findAllProjectedBy(Pageable pageable);
 
-    Page<UserLeaveProjection> findUserLeaveByUser(User user, Pageable pageable);
+    List<UserLeave> findUserLeaveByUser(User user);
 
     Page<UserLeaveProjection> findUserLeaveByFromDate(LocalDateTime date, Pageable pageable);
 
@@ -42,6 +42,9 @@ public interface UserLeaveRepository extends JpaRepository<UserLeave, Long> {
 
     @Query("SELECT ul FROM UserLeave ul WHERE ul.fromDate <= :endDate AND ul.toDate >= :startDate")
     Page<UserLeaveProjection> findUserLeavesBetweenDates(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate, Pageable pageable);
+
+    @Query("select ul from UserLeave ul where ul.fromDate <= :endDate and ul.toDate >= :startDate and ul.user.id = :id")
+    List<UserLeaveProjection> findUserLeaveBetweenDatesByUserId(@Param("id") Long id, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     List<UserLeaveProjection> findUserLeaveByUserIdAndStatusAndAndLeave_AffectsDaysOff(Long id, ApprovalStatus status, boolean affect);
 }

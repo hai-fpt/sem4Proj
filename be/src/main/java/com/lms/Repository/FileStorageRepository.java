@@ -8,7 +8,7 @@ import java.util.List;
 
 @Repository
 public interface FileStorageRepository extends JpaRepository<FileStorage, Long> {
-	List<FileStorage> findAllByLeaveRequest_Id(Long id);
+	List<FileStorage> findAllByLeaveRequestId(Long id);
 
-	Integer countAllByLeaveRequest_Id(Long id);
+	Integer countAllByLeaveRequestId(Long id);
 }

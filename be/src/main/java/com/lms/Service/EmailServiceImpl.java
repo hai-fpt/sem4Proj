@@ -30,11 +30,13 @@ public class EmailServiceImpl extends BaseSendMail implements EmailService {
 		properties.put("reason", leaveRequest.getReason());
 		properties.put("fromDate", leaveRequest.getFromDate());
 		properties.put("toDate", leaveRequest.getToDate());
-		properties.put("team", leaveRequest.getRequester().getTeam());
+		properties.put("team", leaveRequest.getRequester().getTeams());
 		properties.put("sendBy", leaveRequest.getRequester().getName());
 		properties.put("dears", leaveRequest.getDearTos());
 		properties.put("link", leaveRequest.getLink());
 		List<String> ccTos = leaveRequest.getCcTos();
+		properties.put("sendTos", sendTos);
+		properties.put("ccTos", ccTos);
 		sendEmail(sendTos.toArray(new String[sendTos.size()]), ccTos.toArray(new String[ccTos.size()]), leaveRequest.getSubject(), "leave_request.html", properties);
 	}
 

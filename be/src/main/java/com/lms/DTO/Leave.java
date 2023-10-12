@@ -11,8 +11,9 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Leave {
 
+    private Long id;
     private String name;
-
+    private Boolean affectsDaysOff;
     private String description;
 
 }

@@ -1,10 +1,8 @@
 package com.lms.service;
 
-import com.lms.dto.ApprovalStatus;
-import com.lms.dto.DateRange;
-import com.lms.dto.UserLeaveCancel;
-import com.lms.dto.UserLeave;
+import com.lms.dto.*;
 import com.lms.dto.projection.UserLeaveProjection;
+import com.lms.exception.NotFoundByIdException;
 import com.lms.models.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,9 +14,9 @@ import java.util.Optional;
 
 public interface UserLeaveService {
     Optional<com.lms.models.UserLeave> getUserLeaveById(Long id);
-    UserLeaveProjection createUserLeave(UserLeave userLeave) throws IOException;
+    UserLeaveProjection createUserLeave(UserLeave userLeave) throws IOException, NotFoundByIdException;
 
-    UserLeaveProjection cancelLeave(UserLeaveCancel userLeaveCancel);
+    UserLeaveProjection cancelLeave(UserLeaveCancel userLeaveCancel) throws NotFoundByIdException;
 
     Page<UserLeaveProjection> getUserLeaveByRole(User user, Pageable pageable);
 
@@ -28,7 +26,7 @@ public interface UserLeaveService {
 
     Page<UserLeaveProjection> getUserLeaveByDateRange(DateRange date, Pageable pageable);
 
-    Page<UserLeaveProjection> getUserLeaveByMonth(DateRange dateRange, Pageable pageable);
+    DashboardCalendar getUserLeaveRequestList(Long id, DateRange dateRange);
 
     List<UserLeaveProjection> getUserLeaveByIdAndStatusAndType(Long id, ApprovalStatus status, boolean affects);
 }

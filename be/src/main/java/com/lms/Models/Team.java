@@ -43,7 +43,8 @@ public class Team {
     private LocalDateTime updatedDate;
 
 
-    private String updated_by;
+    @Column(name = "updated_by")
+    private String updatedBy;
 
     @OneToMany(mappedBy = "team")
     @JsonIgnore

@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.lms.utils.Constants.*;
+
 @RestController
 @RequestMapping("/api/file")
 public class FileStorageController {
@@ -36,26 +38,26 @@ public class FileStorageController {
 	@PostMapping("/upload")
 	public ResponseEntity<String> uploadFile(@RequestParam("files") MultipartFile[] files,
 											 @RequestParam("requestId") Long requestId,
-											 @RequestParam("requestedByEmail") String requestedByEmail) throws IOException {
+											 @RequestParam("updatedBy") String updatedBy) throws IOException {
 		if (requestId == null || files == null || files.length == 0)
-			throw new NullPointerException("Invalid input params");
-		if (!controllerUtils.validateRequestedUser(requestedByEmail)) {
-			throw new NullPointerException("Email " + requestedByEmail + " not found");
+			throw new NullPointerException(INVALID_PAYLOAD);
+		if (!controllerUtils.validateRequestedUser(updatedBy)) {
+			throw new NullPointerException(EMAIL_NOT_EXISTS);
 		}
 		String message = "";
 		Optional<UserLeave> leaveRequest = userLeaveService.getUserLeaveById(requestId);
 		if (leaveRequest.isEmpty()) {
-			throw new FileNotFoundException("Leave request: " + requestId + "not exists");
+			throw new FileNotFoundException(LEAVE_REQUEST_NOT_EXISTS);
 		}
-		List<FileInfo> savedFiles = storageService.saveToStorage(files, Long.toString(requestId), requestedByEmail);
+		List<FileInfo> savedFiles = storageService.saveToStorage(files, Long.toString(requestId), updatedBy);
 		storageService.saveToDatabase(savedFiles, leaveRequest.get());
-		message = "Uploaded files successfully";
+		message = FILE_UPLOAD_SUCCESS;
 		return ResponseEntity.status(HttpStatus.CREATED).body(message);
 	}
 
 	@GetMapping("/storage/{id}")
 	public ResponseEntity<List<FileInfo>> getListFiles(@PathVariable Long id) {
-		if (id == null) throw new NullPointerException("file or id : is null");
+		if (id == null) throw new NullPointerException(INVALID_ID);
 
 		List<FileInfo> fileInfos = storageService.loadAllById(id).map(path -> {
 			String filename = path.getFileName().toString();
@@ -68,28 +70,28 @@ public class FileStorageController {
 
 	@GetMapping("/storage/{id}/{filename:.+}")
 	public ResponseEntity<Resource> getFile(@PathVariable Long id, @PathVariable String filename) {
-		if (id == null || filename == null) throw new NullPointerException("fileName or id : is null");
+		if (id == null || filename == null) throw new NullPointerException(INVALID_PAYLOAD);
 		Resource file = storageService.getStorageFile(id, filename);
 		return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFilename() + "\"").body(file);
 	}
 
 	@GetMapping("/database/{id}")
 	public ResponseEntity<List<FileInfo>> getFiles(@PathVariable Long id) {
-		if (id == null) throw new NullPointerException("fileName or id : is null");
+		if (id == null) throw new NullPointerException(INVALID_PAYLOAD);
 		List<FileInfo> files = storageService.getFilesByRequestId(id);
 		return ResponseEntity.status(HttpStatus.OK).body(files);
 	}
 
 	@DeleteMapping("/{id}/{filename:.+}")
 	public ResponseEntity<String> deleteFile(@PathVariable Long id, @PathVariable String filename) {
-		if (id == null || filename == null) throw new NullPointerException("fileName or id : is null");
+		if (id == null || filename == null) throw new NullPointerException(INVALID_PAYLOAD);
 		String message = "";
 		boolean existed = storageService.delete(id, filename);
 		if (existed) {
-			message = "Delete the file successfully: " + filename;
+			message = FILE_DELETE_SUCCESS + ": " + filename;
 			return ResponseEntity.status(HttpStatus.OK).body(message);
 		}
-		message = "The file does not exist!";
+		message = FILE_NOT_EXISTS;
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(message);
 	}
 }

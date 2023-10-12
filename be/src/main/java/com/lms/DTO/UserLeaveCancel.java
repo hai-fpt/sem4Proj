@@ -11,5 +11,5 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UserLeaveCancel {
     private Long id;
-    private String requestedByEmail;
+    private String updatedBy;
 }

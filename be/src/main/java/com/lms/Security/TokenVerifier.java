@@ -6,10 +6,12 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.lms.service.ConfigurationService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
@@ -17,11 +19,16 @@ import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.Date;
 
+
+@Component
 public class TokenVerifier {
-    //TODO: MOVE THE SECRET THINGS INTO APPLICATION.YML OR ENV LATER
-    private static String GOOGLE_CLIENT_ID = "647930186322-oolledhdbl5578p2kgcfq290re8jgi8c.apps.googleusercontent.com";
-//    @Value({})
-//    private static String GOOGLE_CLIENT_ID;
+    private final ConfigurationService configurationService;
+    private static String GOOGLE_CLIENT_ID;
+
+    public TokenVerifier(ConfigurationService configurationService) {
+        this.configurationService = configurationService;
+        GOOGLE_CLIENT_ID = configurationService.getGoogleClientId();
+    }
 
 
     public static ResponseEntity<String> verifyToken(String jwtToken) {
@@ -50,7 +57,7 @@ public class TokenVerifier {
     static SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     private static String createJwt(String email, String userId) {
         long currentTimeMillis = System.currentTimeMillis();
-        long expirationTime = currentTimeMillis + (60 * 60 * 1000);
+        long expirationTime = currentTimeMillis + (24 * 60 * 60 * 1000);
         String jwt = Jwts.builder()
                 .setSubject(email)
                 .setId(userId)
@@ -61,7 +68,7 @@ public class TokenVerifier {
         return jwt;
     }
 
-    public static boolean verifyJwt(String token) {
+    public boolean verifyJwt(String token) {
         try {
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)

@@ -10,6 +10,8 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import static com.lms.utils.Constants.JSON_VIEW_DATE_FORMAT;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,7 +22,7 @@ public class User {
 
     private String name;
 
-    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
+    @JsonFormat(pattern = JSON_VIEW_DATE_FORMAT)
     private LocalDateTime dateOfBirth;
 
     private String email;
@@ -31,35 +33,27 @@ public class User {
 
     private String universityCode;
 
-    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
+    @JsonFormat(pattern = JSON_VIEW_DATE_FORMAT)
     private LocalDateTime universityGraduateDate;
 
     private String skills;
 
-    public enum RankEnum {
-        SENIOR_MANAGER,
-        MANAGER,
-        ASSISTANT_MANAGER,
-        EMPLOYEE
-    }
-
     private RankEnum rank;
 
-    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
+    @JsonFormat(pattern = JSON_VIEW_DATE_FORMAT)
     private LocalDateTime joinedDate;
 
     private String department;
 
-    private String team;
 
     private boolean status;
 
-    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
+    @JsonFormat(pattern = JSON_VIEW_DATE_FORMAT)
     private LocalDateTime resignedDate;
 
-    private String requestedByEmail;
+    private String updatedBy;
 
-    private Set<Team> teams = new HashSet<>();
+    private List<Team> teams = new ArrayList<>();
 
     private List<UserRole> userRoles = new ArrayList<>();
 

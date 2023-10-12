@@ -11,5 +11,5 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ChangeUserStatus {
     private boolean status;
-    private String requestedByEmail;
+    private String updatedBy;
 }

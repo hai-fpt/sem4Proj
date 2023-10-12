@@ -3,6 +3,7 @@ package com.lms.service;
 import com.lms.dto.Team;
 import com.lms.dto.projection.ManagerProjection;
 import com.lms.dto.projection.TeamProjection;
+import com.lms.dto.projection.UserProjection;
 import com.lms.models.User;
 import com.lms.models.UserTeam;
 import com.lms.repository.TeamRepository;
@@ -18,6 +19,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+
+import static com.lms.utils.Constants.USER_NOT_EXISTS;
 
 @Service
 public class TeamServiceImpl implements TeamService {
@@ -49,16 +52,16 @@ public class TeamServiceImpl implements TeamService {
     @Override
     public TeamProjection createTeam(Team teamDTO) {
         ModelMapper modelMapper = new ModelMapper();
-        Optional<User> user = userRepository.findById(teamDTO.getManagerId());
+        Optional<User> user = userRepository.findById(teamDTO.getManager());
         User manager = user.get();
         modelMapper.addMappings(new PropertyMap<Team, com.lms.models.Team>() {
             @Override
             protected void configure() {
                 map().setManager(manager);
-                map().setUpdated_by(teamDTO.getRequestedByEmail());
             }
         });
         com.lms.models.Team team = modelMapper.map(teamDTO, com.lms.models.Team.class);
+        team.setUpdatedBy(teamDTO.getUpdatedBy());
         teamRepository.save(team);
         TeamProjection projection = ProjectionMapper.mapToTeamProjection(team);
 
@@ -93,14 +96,14 @@ public class TeamServiceImpl implements TeamService {
     }
     @Override
     public TeamProjection updateTeam(Team team) {
+        Optional<User> manager = userRepository.findById(team.getManager());
+        if (manager.isEmpty()) {
+            throw new NullPointerException(USER_NOT_EXISTS);
+        }
         ModelMapper modelMapper = new ModelMapper();
-        modelMapper.addMappings(new PropertyMap<Team, com.lms.models.Team>() {
-            @Override
-            protected void configure() {
-                map().setUpdated_by(team.getRequestedByEmail());
-            }
-        });
         com.lms.models.Team teamEntity = modelMapper.map(team, com.lms.models.Team.class);
+        teamEntity.setManager(manager.get());
+        teamEntity.setUpdatedBy(team.getUpdatedBy());
         teamEntity.setUpdatedDate(LocalDateTime.now());
         com.lms.models.Team updated = teamRepository.save(teamEntity);
         return ProjectionMapper.mapToTeamProjection(updated);
@@ -108,5 +111,10 @@ public class TeamServiceImpl implements TeamService {
     @Override
     public void deleteTeam(Long id) {
         teamRepository.deleteById(id);
+    }
+
+    @Override
+    public Page<UserProjection> getUsersByTeam(Long id, Pageable pageable) {
+        return teamRepository.findUsersByTeam(id, pageable);
     }
 }

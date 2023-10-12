@@ -29,4 +29,14 @@ public class ConfigurationServiceImpl implements ConfigurationService {
 	public ConfigurationInfo getConfiguration() {
 		return configurationRepository.findAll().get(0).toConfigurationInfo();
 	}
+
+	@Override
+	public String getGoogleClientId() {
+		return configurationRepository.getGoogleClientId();
+	}
+
+	@Override
+	public String getHostAddress() {
+		return configurationRepository.getHostAddress();
+	}
 }

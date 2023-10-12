@@ -5,9 +5,7 @@ import com.lms.models.FileStorage;
 import com.lms.models.UserLeave;
 import com.lms.repository.FileStorageRepository;
 import org.apache.tomcat.util.http.fileupload.impl.FileSizeLimitExceededException;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
@@ -42,9 +40,9 @@ public class FilesStorageServiceImpl implements FilesStorageService {
   }
 
   @Override
-  public List<FileInfo> saveToStorage(MultipartFile[] files, String subdirectory, String requestedByEmail) throws IOException {
+  public List<FileInfo> saveToStorage(MultipartFile[] files, String subdirectory, String updatedBy) throws IOException {
     Integer limit = configurationService.getConfiguration().getLimitAttachment();
-    Integer numberOfFiles = fileStorageRepository.countAllByLeaveRequest_Id(Long.valueOf(subdirectory));
+    Integer numberOfFiles = fileStorageRepository.countAllByLeaveRequestId(Long.valueOf(subdirectory));
     if (limit != null && (numberOfFiles >= limit || numberOfFiles + files.length > limit)) {
       throw new FileSizeLimitExceededException("illegal state: maximal count (" + limit + ") exceeded", numberOfFiles, 5);
     }
@@ -61,7 +59,7 @@ public class FilesStorageServiceImpl implements FilesStorageService {
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
-      savedFiles.add(new FileInfo(file.getOriginalFilename(), path.toString(), requestedByEmail));
+      savedFiles.add(new FileInfo(file.getOriginalFilename(), path.toString(), updatedBy));
     });
     return savedFiles;
   }
@@ -96,7 +94,7 @@ public class FilesStorageServiceImpl implements FilesStorageService {
 
   @Override
   public List<FileInfo> getFilesByRequestId(Long id) {
-    List<FileStorage> dbFiles = fileStorageRepository.findAllByLeaveRequest_Id(id);
+    List<FileStorage> dbFiles = fileStorageRepository.findAllByLeaveRequestId(id);
     return dbFiles.stream().map(fileStorage ->
             new FileInfo(
                     fileStorage.getName(),

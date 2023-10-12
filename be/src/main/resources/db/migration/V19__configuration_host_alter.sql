@@ -1,0 +1,1 @@
+update configuration set host_address = 'http://192.168.1.73/3001/' where id=1;

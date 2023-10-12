@@ -4,10 +4,12 @@ import com.lms.dto.*;
 import com.lms.dto.User;
 import com.lms.dto.UserLeave;
 import com.lms.dto.projection.UserLeaveProjection;
+import com.lms.exception.NotFoundByIdException;
 import com.lms.exception.UnauthorizedException;
-import com.lms.models.*;
 import com.lms.models.LeaveApproval;
 import com.lms.models.Role;
+import com.lms.models.Team;
+import com.lms.models.UserRole;
 import com.lms.repository.LeaveApprovalRepository;
 import com.lms.repository.UserLeaveRepository;
 import com.lms.repository.UserRepository;
@@ -21,10 +23,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
+import javax.transaction.Transactional;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
+
 
 @Service
 public class UserLeaveServiceImpl implements UserLeaveService {
@@ -35,11 +43,17 @@ public class UserLeaveServiceImpl implements UserLeaveService {
     private final HolidayService holidayService;
     private final FilesStorageService filesStorageService;
     private final DateCalculation dateCalculation;
+    private final NotificationService notificationService;
+    private final ConfigurationService configurationService;
 
-
-    public UserLeaveServiceImpl(UserRepository userRepository, UserLeaveRepository userLeaveRepository,
-                                LeaveApprovalRepository leaveApprovalRepository, EmailServiceImpl emailService,
-                                HolidayService holidayService, FilesStorageServiceImpl filesStorageServiceImpl, DateCalculation dateCalculation) {
+    public UserLeaveServiceImpl(UserRepository userRepository,
+                                UserLeaveRepository userLeaveRepository,
+                                LeaveApprovalRepository leaveApprovalRepository,
+                                EmailServiceImpl emailService,
+                                HolidayService holidayService,
+                                FilesStorageServiceImpl filesStorageServiceImpl,
+                                DateCalculation dateCalculation,
+                                NotificationServiceImpl notificationServiceImpl, ConfigurationService configurationService) {
         this.userRepository = userRepository;
         this.userLeaveRepository = userLeaveRepository;
         this.leaveApprovalRepository = leaveApprovalRepository;
@@ -47,6 +61,8 @@ public class UserLeaveServiceImpl implements UserLeaveService {
         this.holidayService = holidayService;
         this.filesStorageService = filesStorageServiceImpl;
         this.dateCalculation = dateCalculation;
+        this.notificationService = notificationServiceImpl;
+        this.configurationService = configurationService;
     }
 
     @Override
@@ -55,10 +71,9 @@ public class UserLeaveServiceImpl implements UserLeaveService {
     }
 
     @Override
-    public UserLeaveProjection createUserLeave(UserLeave userLeave) throws IOException {
-        //Assume got a list of team lead
+    @Transactional
+    public UserLeaveProjection createUserLeave(UserLeave userLeave) throws IOException, NotFoundByIdException {
         ModelMapper modelMapper = new ModelMapper();
-        ModelMapper modelMapper1 = new ModelMapper();
         modelMapper.addMappings(new PropertyMap<com.lms.models.UserLeave, UserLeave>() {
             @Override
             protected void configure() {
@@ -67,30 +82,39 @@ public class UserLeaveServiceImpl implements UserLeaveService {
         });
 
         com.lms.models.User user = userRepository.findById(userLeave.getUser().getId()).get();
-        User userDTO = modelMapper1.map(user, User.class);
+        List<Team> team = userRepository.getTeamByUser(user.getId());
+        List<com.lms.dto.Team> teamDTOs = new ArrayList<>();
+        for (Team team1 : team) {
+            com.lms.dto.Team teamDTO = new com.lms.dto.Team();
+            teamDTO.setTeamName(team1.getTeamName());
+            teamDTOs.add(teamDTO);
+        }
+        User userDTO = new User();
+        userDTO.setId(user.getId());
+        userDTO.setName(user.getName());
+        userDTO.setEmail(user.getEmail());
+        userDTO.setTeams(teamDTOs);
         userLeave.setUser(userDTO);
         com.lms.models.UserLeave userLeaveEntity = modelMapper.map(userLeave, com.lms.models.UserLeave.class);
-        userLeaveEntity.setUpdatedBy(userLeave.getRequestedByEmail());
+        userLeaveEntity.setUpdatedBy(userLeave.getUpdatedBy());
 
         com.lms.models.UserLeave savedUserLeave = userLeaveRepository.save(userLeaveEntity);
         UserLeaveProjection projection = ProjectionMapper.mapToUserLeaveProjection(savedUserLeave);
-
+        List<String> sendTo = new ArrayList<>();
+        List<String> dearTo = new ArrayList<>();
+        List<String> ccTo = new ArrayList<>();
         List<Long> teamLeads = userLeave.getTeamLeads();
+        List<Long> informTos = userLeave.getInformTo();
         if (!teamLeads.isEmpty()) {
             List<LeaveApproval> leaveApprovals = new ArrayList<>();
             LocalDateTime currentDate = LocalDateTime.now();
-            String requestedEmail = userLeave.getRequestedByEmail();
+            String requestedEmail = userLeave.getUpdatedBy();
             for (Long lead : teamLeads) {
-                LeaveApproval leaveApproval = new LeaveApproval(
-                        userLeaveEntity,
-                        lead,
+                leaveApprovals.add(new LeaveApproval(userLeaveEntity, userRepository.findById(lead).get(), currentDate,
                         currentDate,
-                        currentDate,
-                        requestedEmail
-                );
-                leaveApprovals.add(leaveApproval);
+                        requestedEmail));
             }
-            leaveApprovalRepository.saveAll(leaveApprovals);
+            List<LeaveApproval> approvals = leaveApprovalRepository.saveAll(leaveApprovals);
             //Insert attachment
             if (userLeave.getAttachments() != null && userLeave.getAttachments().length > 0) {
                 filesStorageService.saveToDatabase(
@@ -99,23 +123,50 @@ public class UserLeaveServiceImpl implements UserLeaveService {
                                 savedUserLeave.getId().toString(),
                                 savedUserLeave.getUpdatedBy()), savedUserLeave);
             }
+            //Insert Notification
+            com.lms.models.User sender = savedUserLeave.getUser();
+            notificationService.pushNotification(approvals.stream().map(approval -> {
+                com.lms.models.User receiver = approval.getManagerId();
+                NotificationInfo notificationInfo = new NotificationInfo();
+                notificationInfo.setSenderId(sender.getId());
+                notificationInfo.setSenderName(sender.getName());
+                notificationInfo.setSenderEmail(sender.getEmail());
+                notificationInfo.setReceiverId(receiver.getId());
+                notificationInfo.setReceiverName(receiver.getName());
+                notificationInfo.setReceiverEmail(receiver.getEmail());
+                notificationInfo.setStatus(ApprovalStatus.PENDING);
+                notificationInfo.setLeaveFrom(userLeaveEntity.getFromDate());
+                notificationInfo.setLeaveTo(userLeaveEntity.getToDate());
+                sendTo.add(approval.getManagerId().getEmail());
+                dearTo.add(approval.getManagerId().getName());
+                return notificationInfo;
+            }).collect(Collectors.toList()));
         } else {
             throw new NullPointerException("At least 1 team lead must exists");
         }
 
+        if (!informTos.isEmpty()) {
+            List<com.lms.models.User> informToUsers = userRepository.findAllById(informTos);
+            for (com.lms.models.User informTo : informToUsers) {
+                ccTo.add(informTo.getEmail());
+            }
+        }
+
         //Email
         //TODO: FIX THIS AND FINISH PROPERLY
-        //TODO: Add email send when fully approved and when cancelled
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyy HH:mm:ss");
+        String link = configurationService.getHostAddress() + "path/to/update/" + savedUserLeave.getId();
+
 
         LeaveRequest leaveRequestEmail = new LeaveRequest();
         leaveRequestEmail.setRequester(userDTO);
         leaveRequestEmail.setFromDate(userLeave.getFromDate().format(formatter));
         leaveRequestEmail.setToDate(userLeave.getToDate().format(formatter));
         leaveRequestEmail.setReason(userLeave.getReason());
-        List<String> sendTo = new ArrayList<>();
-        sendTo.add("hainvh@mz.co.kr");
+        leaveRequestEmail.setDearTos(dearTo);
         leaveRequestEmail.setSendTos(sendTo);
+        leaveRequestEmail.setCcTos(ccTo);
+        leaveRequestEmail.setLink(link);
         try {
             emailService.sendRequest(leaveRequestEmail);
         } catch (Exception e) {
@@ -125,31 +176,62 @@ public class UserLeaveServiceImpl implements UserLeaveService {
     }
 
     @Override
-    public UserLeaveProjection cancelLeave(UserLeaveCancel userLeaveCancel) {
+    @Transactional
+    public UserLeaveProjection cancelLeave(UserLeaveCancel userLeaveCancel) throws NotFoundByIdException {
         com.lms.models.UserLeave userLeave = userLeaveRepository.findById(userLeaveCancel.getId()).get();
-        userLeave.setUpdatedBy(userLeaveCancel.getRequestedByEmail());
+        userLeave.setUpdatedBy(userLeaveCancel.getUpdatedBy());
         userLeave.setUpdatedDate(LocalDateTime.now());
         userLeave.setStatus(ApprovalStatus.CANCELLED);
 
         com.lms.models.User user = userRepository.findById(userLeave.getUser().getId()).get();
-        ModelMapper modelMapper = new ModelMapper();
-        User userDTO = modelMapper.map(user, User.class);
-
+        User userDTO = new User();
+        userDTO.setName(user.getName());
+        userDTO.setEmail(user.getEmail());
         LeaveProcess leaveProcess = new LeaveProcess();
         leaveProcess.setStatus(userLeave.getStatus());
         leaveProcess.setProcessBy(userDTO);
-        List<String> sendTo = new ArrayList<>();
-        sendTo.add("hainvh@mz.co.kr");
-        leaveProcess.setSendTos(sendTo);
+        com.lms.models.UserLeave saved = userLeaveRepository.save(userLeave);
+        //Push notification
+        List<LeaveApproval> leaveApprovals = userLeave.getLeaveApprovals();
+        List<Long> sendTo = new ArrayList<>();//Used to send email
+        List<String> ccTo = new ArrayList<>();
+        notificationService.pushNotification(leaveApprovals
+                .stream()
+                .map(approval ->
+                {
+                    com.lms.models.User sender = saved.getUser();
+                    com.lms.models.User receiver = approval.getManagerId();
+                    NotificationInfo notificationInfo = new NotificationInfo();
+                    notificationInfo.setSenderId(sender.getId());
+                    notificationInfo.setSenderName(sender.getName());
+                    notificationInfo.setSenderEmail(sender.getEmail());
+                    notificationInfo.setReceiverId(receiver.getId());
+                    notificationInfo.setReceiverName(receiver.getName());
+                    notificationInfo.setReceiverEmail(receiver.getEmail());
+                    notificationInfo.setStatus(saved.getStatus());
+                    notificationInfo.setLeaveFrom(saved.getFromDate());
+                    notificationInfo.setLeaveTo(saved.getToDate());
+                    sendTo.add(approval.getManagerId().getId());
+                    return notificationInfo;
+                })
+                .collect(Collectors.toList()));
+        if (!userLeave.getInformTo().isEmpty()) {
+            List<com.lms.models.User> informToUsers = userRepository.findAllById(userLeave.getInformTo());
+            for (com.lms.models.User informTo : informToUsers) {
+                ccTo.add(informTo.getEmail());
+            }
+        }
+
+        //Send email
+        leaveProcess.setDearTos(userRepository.findAllById(sendTo).stream().map(com.lms.models.User::getName).collect(Collectors.toList()));
+        leaveProcess.setSendTos(userRepository.findAllById(sendTo).stream().map(com.lms.models.User::getEmail).collect(Collectors.toList()));
+        leaveProcess.setCcTos(ccTo);
         try {
             emailService.sendApproval(leaveProcess);
         } catch (MessagingException e) {
             throw new RuntimeException(e);
         }
-
-        com.lms.models.UserLeave saved = userLeaveRepository.save(userLeave);
-        UserLeaveProjection projection = ProjectionMapper.mapToUserLeaveProjection(saved);
-        return projection;
+        return ProjectionMapper.mapToUserLeaveProjection(saved);
     }
 
     @Override
@@ -189,7 +271,15 @@ public class UserLeaveServiceImpl implements UserLeaveService {
 
     @Override
     public Page<UserLeaveProjection> getUserLeaveByUser(com.lms.models.User user, Pageable pageable) {
-        return userLeaveRepository.findUserLeaveByUser(user, pageable);
+        List<com.lms.models.UserLeave> userLeaves = userLeaveRepository.findUserLeaveByUser(user);
+        Page<com.lms.models.Holiday> holidays = holidayService.getAllHolidays(Pageable.unpaged());
+        List<UserLeaveProjection> userLeaveProjections = new ArrayList<>();
+        for (com.lms.models.UserLeave userLeave : userLeaves) {
+            userLeave.setDaysOff(dateCalculation.calculateSingleUserLeaveDaysOff(userLeave, holidays));
+            UserLeaveProjection projection = ProjectionMapper.mapToUserLeaveProjection(userLeave);
+            userLeaveProjections.add(projection);
+        }
+        return new PageImpl<>(userLeaveProjections, pageable, userLeaveProjections.size());
     }
 
     @Override
@@ -204,8 +294,23 @@ public class UserLeaveServiceImpl implements UserLeaveService {
     }
 
     @Override
-    public Page<UserLeaveProjection> getUserLeaveByMonth(DateRange dateRange, Pageable pageable) {
-        return userLeaveRepository.findUserLeavesBetweenDates(dateRange.getStartDate(), dateRange.getEndDate(), pageable);
+    public DashboardCalendar getUserLeaveRequestList(Long id,DateRange dateRange) {
+        List<UserLeaveProjection> userLeaveProjections = userLeaveRepository.findUserLeaveBetweenDatesByUserId(id, dateRange.getStartDate(), dateRange.getEndDate());
+        List<LocalDate> dateList = new ArrayList<>();
+        for (UserLeaveProjection userLeave : userLeaveProjections) {
+            LocalDate fromDate = userLeave.getFromDate().toLocalDate();
+            LocalDate toDate = userLeave.getToDate().toLocalDate();
+
+            long daysBetween = ChronoUnit.DAYS.between(fromDate, toDate);
+
+            for (int i = 0; i <= daysBetween; i++) {
+                LocalDate date = fromDate.plusDays(1);
+                dateList.add(date);
+            }
+        }
+        Collections.sort(dateList);
+        DashboardCalendar dashboardCalendar = new DashboardCalendar(dateList);
+        return dashboardCalendar;
     }
 
     @Override

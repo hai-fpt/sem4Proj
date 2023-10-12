@@ -27,8 +27,9 @@ public class LeaveApproval {
     @JoinColumn(name = "user_leave_id")
     private UserLeave userLeave;
 
-    @Column(name = "manager_id")
-    private Long managerId;
+    @JoinColumn(name = "manager_id")
+    @OneToOne(targetEntity = User.class, fetch = FetchType.LAZY)
+    private User managerId;
 
     //Status: 1: Pending, 2: Approved, 3: Rejected
     @Enumerated(EnumType.STRING)
@@ -45,7 +46,8 @@ public class LeaveApproval {
     @Column(name = "updated_by")
     private String updatedBy;
 
-    public LeaveApproval(UserLeave userLeave, Long managerId, LocalDateTime createdDate, LocalDateTime updatedDate, String updatedBy) {
+    public LeaveApproval(UserLeave userLeave, User managerId, LocalDateTime createdDate, LocalDateTime updatedDate,
+                         String updatedBy) {
         this.userLeave = userLeave;
         this.managerId = managerId;
         this.createdDate = createdDate;

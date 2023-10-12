@@ -2,6 +2,7 @@ package com.lms.controller;
 
 import com.lms.dto.LeaveApproval;
 import com.lms.dto.projection.LeaveApprovalProjection;
+import com.lms.exception.NotFoundByIdException;
 import com.lms.models.User;
 import com.lms.models.UserLeave;
 import com.lms.service.*;
@@ -15,8 +16,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
+import static com.lms.utils.Constants.*;
+
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/manager")
 public class LeaveApprovalController {
     private final LeaveApprovalService leaveApprovalService;
     private final UserLeaveService userLeaveService;
@@ -33,15 +36,19 @@ public class LeaveApprovalController {
     @PutMapping("/leave/status_update")
     @Operation(summary = "Update leave approval tickets",
             description = "Payload include user leave approval id, changed status, user id")
-    public ResponseEntity<LeaveApprovalProjection> updateLeaveApprovalStatus(@RequestBody LeaveApproval leaveApprovalDTO) {
+    public ResponseEntity<LeaveApproval> updateLeaveApprovalStatus(@RequestBody LeaveApproval leaveApprovalDTO) throws NotFoundByIdException {
         Optional<UserLeave> userLeaveOptional = userLeaveService.getUserLeaveById(leaveApprovalDTO.getId());
         if (userLeaveOptional.isEmpty()) {
-            throw new NullPointerException("Leave ticket does not exists");
+            throw new NullPointerException(LEAVE_REQUEST_NOT_EXISTS);
         }
-        if (!controllerUtils.validateRequestedUser(leaveApprovalDTO.getRequestedByEmail())) {
-            throw new NullPointerException("Email " + leaveApprovalDTO.getRequestedByEmail() + " not found");
+        Optional<com.lms.models.LeaveApproval> leaveApprovalOptional = leaveApprovalService.getLeaveApprovalByManagerId(leaveApprovalDTO.getId(), leaveApprovalDTO.getManagerId());
+        if (leaveApprovalOptional.isEmpty()) {
+            throw new NullPointerException(USER_NOT_EXISTS);
         }
-        LeaveApprovalProjection leaveApproval = leaveApprovalService.updateLeaveApprovalStatus(leaveApprovalDTO);
+        if (!controllerUtils.validateRequestedUser(leaveApprovalDTO.getUpdatedBy())) {
+            throw new NullPointerException(EMAIL_NOT_EXISTS);
+        }
+        LeaveApproval leaveApproval = leaveApprovalService.updateLeaveApprovalStatus(leaveApprovalDTO);
         return ResponseEntity.ok(leaveApproval);
     }
 
@@ -50,7 +57,7 @@ public class LeaveApprovalController {
     public ResponseEntity<Page<LeaveApprovalProjection>> getLeaveApprovalByManagerId(@PathVariable("id") Long id, @PageableDefault(size = 10) Pageable pageable) {
         Optional<User> user = userService.getUserById(id);
         if (user.isEmpty()) {
-            throw new NullPointerException("User Id not found");
+            throw new NullPointerException(USER_NOT_EXISTS);
         }
         Pageable sortedPageable = controllerUtils.sortPage(pageable, "updatedDate");
         Page<LeaveApprovalProjection> leaveApprovals = leaveApprovalService.getLeaveApproveByManagerId(id, sortedPageable);

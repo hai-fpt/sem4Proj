@@ -1,14 +1,19 @@
 package com.lms.service;
 
-import com.lms.dto.ChangeUserStatus;
+import com.lms.dto.*;
 import com.lms.dto.Role;
+import com.lms.dto.User;
 import com.lms.dto.projection.UserProjection;
+import com.lms.exception.DuplicateException;
+import com.lms.exception.NotFoundByIdException;
 import com.lms.exception.UnauthorizedException;
 import com.lms.helper.ExcelHelper;
 import com.lms.models.*;
-import com.lms.dto.User;
+import com.lms.models.Team;
 import com.lms.repository.*;
 import com.lms.utils.ProjectionMapper;
+import org.hibernate.HibernateError;
+import org.hibernate.HibernateException;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.PropertyMap;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +27,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -62,28 +68,34 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserProjection createUser(User user) {
         ModelMapper modelMapper = new ModelMapper();
-        modelMapper.addMappings(new PropertyMap<User, com.lms.models.User>() {
-            @Override
-            protected void configure() {
-                map().setUpdatedBy(user.getRequestedByEmail());
-            }
-        });
         com.lms.models.User userEntity = modelMapper.map(user, com.lms.models.User.class);
+        userEntity.setUpdatedBy(user.getUpdatedBy());
 
         Optional<com.lms.models.Role> roleExists = roleRepository.findById(3L);
         com.lms.models.User userSaved = userRepository.save(userEntity);
         UserProjection projection = ProjectionMapper.mapToUserProjection(userSaved);
+        List<UserRole> userRoles = new ArrayList<>();
         if (roleExists.isPresent()) {
             com.lms.models.Role role = roleExists.get();
             UserRole userRole = new UserRole(userSaved, role);
-            userRoleRepository.save(userRole);
+            userRoles.add(userRole);
+        }
+        userRoleRepository.saveAll(userRoles);
+        List<Long> teamIds = user.getTeams().stream().map(com.lms.dto.Team::getId).collect(Collectors.toList());
+
+        List<Team> teams = teamRepository.findAllById(teamIds);
+        List<UserTeam> userTeams = new ArrayList<>();
+
+        for (Team team : teams) {
+            UserTeam userTeam = new UserTeam(userEntity, team);
+            userTeams.add(userTeam);
+        }
+        try {
+            userTeamRepository.saveAll(userTeams);
+        } catch (HibernateError ex) {
+            throw new HibernateException("User and team pair already exists");
         }
 
-        Team team = teamRepository.findTeamByTeamName(user.getTeam());
-        if (team != null) {
-            UserTeam userTeam = new UserTeam(userEntity, team);
-            userTeamRepository.save(userTeam);
-        }
         return projection;
     }
 
@@ -92,14 +104,6 @@ public class UserServiceImpl implements UserService {
         return userRepository.getUserByCreatedDateBetween(startDate, endDate, pageable);
     }
 
-    //    @Override
-//    public Page<UserTeam> getUserTeamByUser(UserDTO userDTO, Pageable pageable) {
-//        ModelMapper modelMapper = new ModelMapper();
-//        User userSearch = modelMapper.map(userDTO, User.class);
-//        Optional<User> user = userRepository.findById(userSearch.getId());
-//        UserTeam userTeam = userTeamRepository.getUserTeamByUser(user.get());
-//        return userTeamRepository.getUserTeamByTeam(userTeam.getTeam(), pageable);
-//    }
     @Override
     public Page<UserTeam> getUserTeamByUser(com.lms.models.User user, Pageable pageable) {
         UserTeam userTeam = userTeamRepository.getUserTeamByUser(user);
@@ -131,24 +135,74 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserProjection updateUser(User user) {
-        ModelMapper modelMapper = new ModelMapper();
-        modelMapper.addMappings(new PropertyMap<User, com.lms.models.User>() {
-            @Override
-            protected void configure() {
-                map().setUpdatedBy(user.getRequestedByEmail());
-            }
-        });
-        com.lms.models.User userEntity = modelMapper.map(user, com.lms.models.User.class);
+        com.lms.models.User userEntity = userRepository.findById(user.getId()).get();
+        userEntity.setName(user.getName());
+        userEntity.setDateOfBirth(user.getDateOfBirth());
+        userEntity.setEmail(user.getEmail());
+        userEntity.setPhone(user.getPhone());
+        userEntity.setUniversity(user.getUniversity());
+        userEntity.setUniversityCode(user.getUniversityCode());
+        userEntity.setUniversityGraduateDate(user.getUniversityGraduateDate());
+        userEntity.setSkills(user.getSkills());
+        userEntity.setRank(user.getRank());
+        userEntity.setJoinedDate(user.getJoinedDate());
+        userEntity.setDepartment(user.getDepartment());
+        userEntity.setStatus(user.isStatus());
+        userEntity.setResignedDate(user.getResignedDate());
+        userEntity.setStatus(user.isStatus());
+        userEntity.setUpdatedBy(user.getUpdatedBy());
         userEntity.setUpdatedDate(LocalDateTime.now());
-        com.lms.models.User updated = userRepository.save(userEntity);
-        return ProjectionMapper.mapToUserProjection(updated);
+
+        List<UserTeam> userTeams = new ArrayList<>();
+        List<UserRole> userRoles = new ArrayList<>();
+
+        for (com.lms.dto.Team team : user.getTeams()) {
+            for (UserTeam existTeam : userEntity.getUserTeams()) {
+                if (Objects.equals(team.getId(), existTeam.getTeam().getId())) {
+                    continue;
+                }
+                Team teamEntity = teamRepository.findById(team.getId()).get();
+                UserTeam userTeam = new UserTeam(userEntity, teamEntity);
+                userTeams.add(userTeam);
+            }
+        }
+        try {
+            userTeamRepository.saveAll(userTeams);
+        } catch (HibernateError ex) {
+            throw new HibernateException("User and team pair already exists");
+        }
+        Set<com.lms.models.Role.RoleEnum> newRoleNames = new HashSet<>(user.getUserRoles().stream()
+                .map(role -> role.getRole().getName())
+                .collect(Collectors.toList()));
+        List<UserRole> existingUserRoles = userRoleRepository.findByUser(userEntity);
+        List<UserRoleKey> userRolesToDelete = new ArrayList<>();
+        for (UserRole exists : existingUserRoles) {
+            com.lms.models.Role.RoleEnum roleId = exists.getRole().getName();
+            if (newRoleNames.contains(roleId)) {
+                newRoleNames.remove(roleId);
+            } else {
+                userRolesToDelete.add(exists.getId());
+            }
+        }
+        for (com.lms.models.Role.RoleEnum roleId : newRoleNames) {
+            com.lms.models.Role role = roleRepository.findByName(roleId);
+            if (role != null) {
+                UserRole newUserRole = new UserRole(userEntity, role);
+                userRoles.add(newUserRole);
+            }
+        }
+        userRoleRepository.deleteAllById(userRolesToDelete);
+        userRoleRepository.saveAll(userRoles);
+
+        userRepository.save(userEntity);
+        return ProjectionMapper.mapToUserProjection(userEntity);
     }
 
     @Override
     public UserProjection changeStatus(Long id, ChangeUserStatus statusDTO) {
         com.lms.models.User user = userRepository.findById(id).get();
         user.setStatus(statusDTO.isStatus());
-        user.setUpdatedBy(statusDTO.getRequestedByEmail());
+        user.setUpdatedBy(statusDTO.getUpdatedBy());
         user.setUpdatedDate(LocalDateTime.now());
         com.lms.models.User updated = userRepository.save(user);
         return ProjectionMapper.mapToUserProjection(updated);
@@ -196,8 +250,11 @@ public class UserServiceImpl implements UserService {
     public void saveExcel(MultipartFile file) {
         try {
             List<com.lms.models.User> listUser = excelHelper.excelToUsers(file.getInputStream());
-            userRepository.saveAll(listUser);
-
+            if(listUser.size() > 0){
+                userRepository.saveAll(listUser);
+            }else {
+                throw new RuntimeException("you need additional data ");
+            }
         } catch (IOException e) {
             throw new RuntimeException("fail to store excel data: " + e.getMessage());
         }
@@ -205,5 +262,23 @@ public class UserServiceImpl implements UserService {
 
     public Page<UserProjection> searchUser(String keyword, Pageable pageable) {
         return userRepository.searchUser(keyword, pageable);
+    }
+
+    @Override
+    public com.lms.models.User updateMyProflie(Long id, MyProfile myProfile) throws NotFoundByIdException {
+        Optional<com.lms.models.User> userOptional = userRepository.findById(id);
+        if (userOptional.isEmpty()) {
+            throw new NotFoundByIdException("User not found with id: " +id);
+        }
+        com.lms.models.User userEntity = userOptional.get();
+        userEntity.setName(myProfile.getName());
+        userEntity.setPhone(myProfile.getPhone());
+        userEntity.setSkills(myProfile.getSkills());
+        return userRepository.save(userEntity);
+    }
+
+    @Override
+    public List<com.lms.models.Role.RoleEnum> getRolesOfUser(Long id) {
+        return userRepository.getRolesOfUser(id);
     }
 }

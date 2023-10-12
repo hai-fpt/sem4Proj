@@ -28,12 +28,10 @@ public class Holiday {
     private String description;
 
     @Column(name = "from_date")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date fromDate;
+    private LocalDateTime fromDate;
 
     @Column(name = "to_date")
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date toDate;
+    private LocalDateTime toDate;
 
     @Column(name = "created_date", nullable = false, updatable = false)
     @CreationTimestamp

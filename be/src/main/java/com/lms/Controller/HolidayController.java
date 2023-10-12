@@ -9,6 +9,7 @@ import com.lms.utils.ControllerUtils;
 import com.lms.utils.ProjectionMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -18,8 +19,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Objects;
 import java.util.Optional;
 
+import static com.lms.utils.Constants.*;
+
 @RestController
-@RequestMapping("/api/holiday")
+@RequestMapping("/api/admin/holiday")
 public class HolidayController {
 
     @Autowired
@@ -34,9 +37,9 @@ public class HolidayController {
     }
 
     @GetMapping()
-    public ResponseEntity<Page<com.lms.models.Holiday>> getAllHolidays(@PageableDefault(page = 0, size = 10)Pageable pageable) {
+    public ResponseEntity<Page<HolidayProjection>> getAllHolidays(@PageableDefault(page = 0, size = 10)Pageable pageable) {
         Pageable sorted = controllerUtils.sortPage(pageable, "updatedDate");
-        Page<com.lms.models.Holiday> holidays = holidayService.getAllHolidays(sorted);
+        Page<HolidayProjection> holidays = holidayService.getAllHolidayProjection(sorted);
         return ResponseEntity.ok(holidays);
     }
 
@@ -44,7 +47,7 @@ public class HolidayController {
     @GetMapping("/{id}")
     public ResponseEntity<HolidayProjection> getHolidayById(@PathVariable("id") Long id) throws NotFoundByIdException {
         if (Objects.isNull(id) || id < 0 ) {
-                throw new NullPointerException("Id invalid");
+                throw new NullPointerException(INVALID_ID);
         }
         Optional<com.lms.models.Holiday> holidayOptional = holidayService.findHolidayById(id);
         com.lms.models.Holiday holiday = holidayOptional.get();
@@ -55,19 +58,19 @@ public class HolidayController {
     @PostMapping()
     public ResponseEntity<HolidayProjection> createHoliday(@RequestBody Holiday holidayDTO) throws DuplicateException {
         if (Objects.isNull(holidayDTO)) {
-            throw new NullPointerException("Holiday Invalid");
+            throw new NullPointerException(INVALID_PAYLOAD);
         }
-        if(holidayDTO.getName().isEmpty()) {
-            throw new NullPointerException("Name invalid");
+        if(holidayDTO.getName() == null ||holidayDTO.getName().isEmpty()) {
+            throw new NullPointerException(INVALID_NAME);
         }
         if(holidayDTO.getFromDate() == null) {
-            throw new NullPointerException("FromDate invalid");
+            throw new NullPointerException(INVALID_DATE);
         }
         if(holidayDTO.getToDate() == null){
-            throw new NullPointerException("ToDate invalid");
+            throw new NullPointerException(INVALID_DATE);
         }
         if(holidayDTO.getFromDate().compareTo(holidayDTO.getToDate()) > 0){
-            throw new NullPointerException("FromDate invalid");
+            throw new NullPointerException(INVALID_FROM_TO_DATE);
         }
         com.lms.models.Holiday newHoliday = holidayService.createHoliday(holidayDTO);
         HolidayProjection holidayProjection = ProjectionMapper.mapToHolidayProjection(newHoliday);
@@ -77,22 +80,22 @@ public class HolidayController {
     @PutMapping("/{id}")
     public ResponseEntity<HolidayProjection> updateHoliday(@PathVariable("id") Long id, @RequestBody Holiday holidayDTO) throws NotFoundByIdException, DuplicateException {
         if(Objects.isNull(holidayDTO)) {
-            throw new NullPointerException("Holiday invalid");
+            throw new NullPointerException(INVALID_PAYLOAD);
         }
         if (Objects.isNull(id) || id < 0) {
-            throw new NullPointerException("Id invalid");
+            throw new NullPointerException(INVALID_ID);
         }
-        if(holidayDTO.getName().isEmpty()) {
-            throw new NullPointerException("Name invalid");
+        if(holidayDTO.getName() == null ||holidayDTO.getName().isEmpty()) {
+            throw new NullPointerException(INVALID_NAME);
         }
-        if(holidayDTO.getFromDate() == null ) {
-            throw new NullPointerException("FromDate invalid");
+        if(holidayDTO.getFromDate() == null) {
+            throw new NullPointerException(INVALID_DATE);
         }
         if(holidayDTO.getToDate() == null) {
-            throw new NullPointerException("ToDate invalid");
+            throw new NullPointerException(INVALID_DATE);
         }
         if(holidayDTO.getFromDate().compareTo(holidayDTO.getToDate()) > 0) {
-            throw new NullPointerException("Date invalid");
+            throw new NullPointerException(INVALID_FROM_TO_DATE);
         }
             com.lms.models.Holiday holiday = holidayService.updateHoliday(id, holidayDTO);
             HolidayProjection holidayProjection = ProjectionMapper.mapToHolidayProjection(holiday);
@@ -102,7 +105,7 @@ public class HolidayController {
     @DeleteMapping("/{id}")
     public ResponseEntity deleteHoliday(@PathVariable("id") Long id) {
         if (Objects.isNull(id) || id < 0) {
-            throw new NullPointerException("Id invalid");
+            throw new NullPointerException(INVALID_ID);
         }
         holidayService.deleteHoliday(id);
         return ResponseEntity.status(HttpStatus.OK).body(true);

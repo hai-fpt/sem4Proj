@@ -1,6 +1,7 @@
 package com.lms.service;
 
 import com.lms.dto.Role;
+import com.lms.dto.projection.RoleProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -8,7 +9,7 @@ import java.util.Optional;
 
 public interface RoleService {
 
-    Page<com.lms.models.Role> getAllRoles(Pageable pageable);
+    Page<RoleProjection> getAllRoles(Pageable pageable);
 
     Optional<com.lms.models.Role> findRoleById(Long id);
 

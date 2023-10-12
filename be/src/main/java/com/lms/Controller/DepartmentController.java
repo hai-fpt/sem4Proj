@@ -18,8 +18,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Objects;
 import java.util.Optional;
 
+import static com.lms.utils.Constants.*;
+
 @RestController
-@RequestMapping("/api/department")
+@RequestMapping("/api/admin/department")
 public class DepartmentController {
     @Autowired
     private final DepartmentService departmentService;
@@ -42,7 +44,7 @@ public class DepartmentController {
     @GetMapping("/{id}")
     public ResponseEntity<DepartmentProjection> getDepartmentById(@PathVariable("id") Long id) throws NotFoundByIdException {
         if(Objects.isNull(id) || id < 0){
-            throw new NullPointerException("Id invalid");
+            throw new NullPointerException(INVALID_ID);
         }
         Optional<com.lms.models.Department> departmentOptional = departmentService.findDepartmentById(id);
         com.lms.models.Department department = departmentOptional.get();
@@ -53,13 +55,13 @@ public class DepartmentController {
     @PostMapping()
     public ResponseEntity<DepartmentProjection> createDepartment(@RequestBody Department department) throws NotFoundByIdException, DuplicateException {
         if(Objects.isNull(department)){
-            throw new NullPointerException("Department invalid");
+            throw new NullPointerException(INVALID_PAYLOAD);
         }
-        if(department.getName().isEmpty()){
-            throw new NullPointerException("Name invalid");
+        if(department.getName() == null ||department.getName().isEmpty()){
+            throw new NullPointerException(INVALID_NAME);
         }
         if (Objects.isNull(department.getManagerId()) || department.getManagerId() < 0){
-            throw new NullPointerException("Manager Id invalid");
+            throw new NullPointerException(USER_NOT_EXISTS);
         }
         com.lms.models.Department newDepartment = departmentService.createDepartment(department);
         DepartmentProjection departmentProjection = ProjectionMapper.mapToDepartmentProjection(newDepartment);
@@ -69,16 +71,16 @@ public class DepartmentController {
     @PutMapping("/{id}")
     public ResponseEntity<DepartmentProjection> updateDepartment(@PathVariable("id") Long id, @RequestBody Department department) throws NotFoundByIdException, DuplicateException {
         if(Objects.isNull(id) || id < 0){
-            throw new NullPointerException("Id invalid");
+            throw new NullPointerException(INVALID_ID);
         }
         if (Objects.isNull(department)){
-            throw new NullPointerException("Department invalid");
+            throw new NullPointerException(INVALID_PAYLOAD);
         }
-        if(department.getName().isEmpty()){
-            throw new NullPointerException("No Name");
+        if(department.getName() == null || department.getName().isEmpty()){
+            throw new NullPointerException(INVALID_NAME);
         }
         if (Objects.isNull(department.getManagerId()) || department.getManagerId() < 0){
-            throw new NullPointerException("No Manager");
+            throw new NullPointerException(USER_NOT_EXISTS);
         }
         com.lms.models.Department updateDepartment = departmentService.updateDepartment(id, department);
         DepartmentProjection departmentProjection = ProjectionMapper.mapToDepartmentProjection(updateDepartment);
@@ -88,7 +90,7 @@ public class DepartmentController {
     @DeleteMapping("/{id}")
     public ResponseEntity deleteDepartment(@PathVariable("id") Long id){
         if(Objects.isNull(id) || id < 0){
-            throw new NullPointerException("Id invalid");
+            throw new NullPointerException(INVALID_ID);
         }
         departmentService.deleteDepartment(id);
         return ResponseEntity.status(HttpStatus.OK).body(true);

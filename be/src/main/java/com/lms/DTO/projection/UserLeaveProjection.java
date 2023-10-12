@@ -2,26 +2,39 @@ package com.lms.dto.projection;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.lms.dto.ApprovalStatus;
+import com.lms.dto.DaysOff;
+import com.lms.dto.FileInfo;
 import com.lms.models.FileStorage;
 import com.lms.models.Leave;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
+import static com.lms.utils.Constants.JSON_VIEW_DATE_FORMAT;
+
 public interface UserLeaveProjection {
-    Long getId();
-    UserProjection getUser();
+	Long getId();
 
-    Leave getLeave();
+	UserProjection getUser();
 
-    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
+	Leave getLeave();
+
+    @JsonFormat(pattern = JSON_VIEW_DATE_FORMAT)
     LocalDateTime getFromDate();
 
-    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
+    @JsonFormat(pattern = JSON_VIEW_DATE_FORMAT)
     LocalDateTime getToDate();
 
-    ApprovalStatus getStatus();
+	ApprovalStatus getStatus();
 
     List<FileStorage> getAttachedFiles();
+    @JsonFormat(pattern = JSON_VIEW_DATE_FORMAT)
+    LocalDateTime getCreatedDate();
+
+    @JsonFormat(pattern = JSON_VIEW_DATE_FORMAT)
+    LocalDateTime getUpdatedDate();
+
+    String getUpdatedBy();
+
+    Long getDaysOff();
 }

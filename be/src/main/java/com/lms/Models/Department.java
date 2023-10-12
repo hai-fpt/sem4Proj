@@ -38,7 +38,7 @@ public class Department {
     private LocalDateTime updatedDate;
 
     @Column(name = "updated_by")
-    private String updated_by;
+    private String updatedBy;
 
     @OneToMany(mappedBy = "department")
     @JsonIgnore

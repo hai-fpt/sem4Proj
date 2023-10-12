@@ -1,5 +1,6 @@
 package com.lms.controller;
 
+import com.lms.dto.RankEnum;
 import com.lms.dto.User;
 import com.lms.dto.projection.UserProjection;
 import com.lms.security.TokenVerifier;
@@ -14,25 +15,28 @@ import java.util.Optional;
 @RequestMapping("/login")
 public class Login {
     private final UserServiceImpl userServiceImpl;
+    private final TokenVerifier tokenVerifier;
 
-    public Login(UserServiceImpl userServiceImpl) {
+    public Login(UserServiceImpl userServiceImpl, TokenVerifier tokenVerifier) {
         this.userServiceImpl = userServiceImpl;
+        this.tokenVerifier = tokenVerifier;
     }
 
     @PostMapping
     public ResponseEntity<UserProjection> loginCreate(@RequestBody User user) {
         Optional<UserProjection> existingUser = userServiceImpl.getUserByEmail(user.getEmail());
         if (existingUser.isPresent()) {
-            return ResponseEntity.ok().build();
+            UserProjection userProjection = existingUser.get();
+            return ResponseEntity.status(HttpStatus.OK).body(userProjection);
         }
-        user.setRank(User.RankEnum.EMPLOYEE);
+        user.setRank(RankEnum.EMPLOYEE);
         UserProjection newUser = userServiceImpl.createUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
     }
     @GetMapping
     public ResponseEntity<String> accessWithToken(@RequestHeader("Authorization") String authorizationHeader) {
         String token = extractJwtToken(authorizationHeader);
-        if (token != null && TokenVerifier.verifyJwt(token)) {
+        if (token != null && tokenVerifier.verifyJwt(token)) {
             return ResponseEntity.ok("ok");
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

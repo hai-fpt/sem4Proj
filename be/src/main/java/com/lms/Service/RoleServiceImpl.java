@@ -1,6 +1,7 @@
 package com.lms.service;
 
 import com.lms.dto.Role;
+import com.lms.dto.projection.RoleProjection;
 import com.lms.repository.RoleRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +21,8 @@ public class RoleServiceImpl implements RoleService{
     }
 
     @Override
-    public Page<com.lms.models.Role> getAllRoles(Pageable pageable) {
-        return roleRepository.findAll(pageable);
+    public Page<RoleProjection> getAllRoles(Pageable pageable) {
+        return roleRepository.findAllProjectedBy(pageable);
     }
 
     @Override

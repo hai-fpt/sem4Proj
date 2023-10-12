@@ -9,7 +9,9 @@ import com.lms.utils.ControllerUtils;
 import com.lms.utils.ProjectionMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Objects;
 import java.util.Optional;
+
+import static com.lms.utils.Constants.*;
 
 @RestController
 @RequestMapping("/api/leave")
@@ -35,7 +39,11 @@ public class LeaveController {
 
     @GetMapping()
     public ResponseEntity<Page<LeaveProjection>> getAllLeaves(@PageableDefault(page = 0, size = 10)Pageable pageable){
-        Pageable sorted = controllerUtils.sortPage(pageable, "updatedDate");
+        Pageable sorted = PageRequest.of(
+                pageable.getPageNumber(),
+                pageable.getPageSize(),
+                Sort.by(Sort.Direction.ASC, "id")
+        );
         Page<LeaveProjection> leaves = leaveService.getAllLeaves(sorted);
         return ResponseEntity.ok(leaves);
     }
@@ -43,7 +51,7 @@ public class LeaveController {
     @GetMapping("/{id}")
     public ResponseEntity<LeaveProjection> getLeaveById(@PathVariable("id") Long id){
         if (Objects.isNull(id) || id < 0){
-            throw new NullPointerException("Id invalid");
+            throw new NullPointerException(INVALID_ID);
         }
         Optional<com.lms.models.Leave> leaveOptional = leaveService.findLeaveById(id);
         com.lms.models.Leave leave = leaveOptional.get();
@@ -54,10 +62,13 @@ public class LeaveController {
     @PostMapping()
     public ResponseEntity<LeaveProjection> createLeave(@RequestBody Leave leave) throws DuplicateException {
         if (Objects.isNull(leave)){
-            throw new NullPointerException("Leave invalid");
+            throw new NullPointerException(INVALID_PAYLOAD);
         }
-        if (leave.getName().isEmpty()){
-            throw new NullPointerException("Name invalid");
+        if (leave.getName() == null || leave.getName().isEmpty()){
+            throw new NullPointerException(INVALID_NAME);
+        }
+        if (Objects.isNull(leave.getAffectsDaysOff())){
+           leave.setAffectsDaysOff(true);
         }
         com.lms.models.Leave newLeave = leaveService.createLeave(leave);
         LeaveProjection leaveProjection = ProjectionMapper.mapToLeaveProjection(newLeave);
@@ -67,13 +78,16 @@ public class LeaveController {
     @PutMapping("/{id}")
     public ResponseEntity<LeaveProjection> updateLeave(@PathVariable("id") Long id, @RequestBody Leave leave) throws DuplicateException, NotFoundByIdException {
         if(Objects.isNull(id) || id < 0){
-            throw new NullPointerException("Id invalid");
+            throw new NullPointerException(INVALID_ID);
         }
         if (Objects.isNull(leave)){
-            throw new NullPointerException("Leave invalid");
+            throw new NullPointerException(INVALID_PAYLOAD);
         }
-        if(leave.getName().isEmpty()){
-            throw new NullPointerException("Name invalid");
+        if(leave.getName() == null || leave.getName().isEmpty()){
+            throw new NullPointerException(INVALID_NAME);
+        }
+        if (Objects.isNull(leave.getAffectsDaysOff())){
+            leave.setAffectsDaysOff(true);
         }
         com.lms.models.Leave updateLeave = leaveService.updateLeave(id, leave);
         LeaveProjection leaveProjection = ProjectionMapper.mapToLeaveProjection(updateLeave);
@@ -83,7 +97,7 @@ public class LeaveController {
     @DeleteMapping("/{id}")
     public ResponseEntity deleteLeave(@PathVariable("id") Long id){
         if(Objects.isNull(id) || id < 0){
-            throw new NullPointerException("Id invalid");
+            throw new NullPointerException(INVALID_ID);
         }
         leaveService.deleteLeave(id);
         return ResponseEntity.status(HttpStatus.OK).body(true);

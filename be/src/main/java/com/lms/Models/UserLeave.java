@@ -3,12 +3,15 @@ package com.lms.models;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import com.lms.dto.ApprovalStatus;
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
+import com.vladmihalcea.hibernate.type.json.JsonType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
@@ -27,6 +30,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 public class UserLeave {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,8 +58,9 @@ public class UserLeave {
 
     private String reason;
 
-    @Type(type = "list-array")
-    @Column(name = "inform_to", columnDefinition = "bigint[]")
+//    @Type(type = "list-array")
+    @Type(type = "jsonb")
+    @Column(name = "inform_to", columnDefinition = "jsonb")
     private List<Long> informTo;
 
     @Column(name = "created_date", nullable = false, updatable = false)

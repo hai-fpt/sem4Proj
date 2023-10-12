@@ -18,9 +18,9 @@ public class Team {
 
     private String description;
 
-    private String requestedByEmail;
+    private String updatedBy;
 
-    private Long managerId;
+    private Long manager;
 
     private List<Long> userList;
 

@@ -11,7 +11,8 @@ import lombok.Setter;
 @AllArgsConstructor
 public class LeaveApproval {
     private Long id;
+    private Long managerId;
     private ApprovalStatus status;
-    private String requestedByEmail;
+    private String updatedBy;
 
 }
