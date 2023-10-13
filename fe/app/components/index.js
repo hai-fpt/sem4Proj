@@ -6,6 +6,8 @@ export SidebarBig from './SidebarBig';
 export BreadCrumb from './BreadCrumb/BreadCrumb';
 export SourceReader from './SourceReader/SourceReader';
 export PapperBlock from './PapperBlock/PapperBlock';
+export TabPanel from './TabPanel/TabPanel';
+export TabsNavigation from './TabsNavigation/TabsNavigation';
 export SearchUi from './Search/SearchUi';
 export SelectLanguage from './SelectLanguage';
 // Guide

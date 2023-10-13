@@ -68,3 +68,10 @@ export const NotFoundDedicated = loadable(() =>
   import ('./Pages/Standalone/NotFoundDedicated'), {
     fallback: <Loading />,
   });
+
+export const Holiday = loadable(() =>
+import ('./Pages/Holiday/index'), {
+  fallback: <Loading />,
+});
+//
+

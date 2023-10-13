@@ -11,6 +11,7 @@ import {
   Form,
   Table,
   Parent,
+  Holiday,
 } from "../pageListAsync";
 
 function Application(props) {
@@ -36,6 +37,9 @@ function Application(props) {
         <Route path="/app/pages/import/user" component={DashboardPage} />
         <Route path="/app/pages/leave/manage" component={Table} />
         <Route path="/app/pages/leave/apply" component={DashboardPage} />
+
+        {/* Holiday management */}
+        <Route path="/app/pages/holidays" component={Holiday}/>
 
         <Route component={NotFound} />
       </Switch>
