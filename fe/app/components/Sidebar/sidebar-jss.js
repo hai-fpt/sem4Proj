@@ -4,7 +4,7 @@ import red from '@material-ui/core/colors/red';
 import amber from '@material-ui/core/colors/amber';
 import grey from '@material-ui/core/colors/grey';
 
-const drawerWidth = 240;
+const drawerWidth = 260;
 const styles = theme => ({
   user: {
     justifyContent: 'center'
@@ -175,7 +175,7 @@ const styles = theme => ({
     whiteSpace: 'nowrap'
   },
   icon: {
-    minWidth: theme.spacing(5),
+    minWidth: 44,
     color: alpha(theme.palette.text.hint, 0.48)
   },
   iconed: {
@@ -184,7 +184,7 @@ const styles = theme => ({
         content: '""',
         position: 'absolute',
         width: 5,
-        height: theme.spacing(6),
+        height: theme.spacing(5),
         top: 0,
         left: 0,
         background: alpha(theme.palette.primary.main, 0.5)
@@ -192,12 +192,14 @@ const styles = theme => ({
     }
   },
   head: {
-    padding: `${theme.spacing(1)}px 0`,
-    margin: `${theme.spacing(1)}px 0`,
+    padding: 6,
+    margin: 6,
+    marginTop: 3,
     borderRadius: `0 ${theme.spacing(1)}px ${theme.spacing(1)}px 0`,
-    paddingLeft: theme.spacing(3),
+    paddingLeft: 14,
     '&$iconed': {
-      paddingLeft: theme.spacing(3),
+      marginBottom: 0,
+      marginTop: 6,
     },
     '& svg[class^="MuiSvgIcon"]': {
       left: -10,
@@ -270,13 +272,14 @@ const styles = theme => ({
     position: 'absolute',
     margin: `${theme.spacing(2)}px 0`,
     zIndex: 0,
-    '& h4': {
-      fontSize: 18,
+    '& p': {
+      fontSize: 14,
       marginBottom: 0,
+      fontWeight: 600,
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
-      width: 110
+      width: 200
     },
     '& button': {
       fontSize: 12,

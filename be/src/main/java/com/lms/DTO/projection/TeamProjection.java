@@ -23,5 +23,7 @@ public interface TeamProjection {
 
     String getUpdatedBy();
 
+    DepartmentProjection getDepartment();
+
 //    List<UserTeamUserProjection> getUserTeams();
 }

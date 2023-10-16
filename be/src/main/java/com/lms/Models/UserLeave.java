@@ -45,11 +45,9 @@ public class UserLeave {
     private Leave leave;
 
     @Column(name = "from_date")
-    @CreationTimestamp
     private LocalDateTime fromDate;
 
     @Column(name = "to_date")
-    @CreationTimestamp
     private LocalDateTime toDate;
 
     //Status: 1: Pending, 2: Approved, 3: Rejected, 4: Cancelled
@@ -57,6 +55,8 @@ public class UserLeave {
     private ApprovalStatus status;
 
     private String reason;
+    @Column(name = "rejected_reason")
+    private String rejectedReason;
 
 //    @Type(type = "list-array")
     @Type(type = "jsonb")
@@ -85,4 +85,16 @@ public class UserLeave {
 
     @Transient
     private long daysOff;
+
+    public UserLeave(User user, Leave leave, LocalDateTime fromDate,
+                     LocalDateTime toDate, ApprovalStatus status, String reason, String updatedBy, List<Long> informTo) {
+        this.user = user;
+        this.leave = leave;
+        this.fromDate = fromDate;
+        this.toDate = toDate;
+        this.status = status;
+        this.reason = reason;
+        this.updatedBy = updatedBy;
+        this.informTo = informTo;
+    }
 }

@@ -43,4 +43,8 @@ public class Department {
     @OneToMany(mappedBy = "department")
     @JsonIgnore
     private List<User> users = new ArrayList<>();
+
+    @OneToMany(mappedBy = "department")
+    @JsonIgnore
+    private List<Team> teams = new ArrayList<>();
 }

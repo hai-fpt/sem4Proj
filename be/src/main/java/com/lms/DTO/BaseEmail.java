@@ -24,5 +24,5 @@ public class BaseEmail {
 
 	private String link;
 
-	private String subject = "[VDC] Leave Request";
+	private String subject;
 }

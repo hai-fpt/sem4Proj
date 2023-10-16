@@ -6,12 +6,8 @@ import React, {
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 import classNames from 'classnames';
-import Button from '@material-ui/core/Button';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
 import Avatar from '@material-ui/core/Avatar';
-import { injectIntl, FormattedMessage } from 'react-intl';
-import messages from 'enl-api/ui/menuMessages';
+import { injectIntl } from 'react-intl';
 import MainMenu from './MainMenu';
 import styles from './sidebar-jss';
 
@@ -23,28 +19,25 @@ function SidebarContent(props) {
     loadTransition,
     leftSidebar,
     dataMenu,
-    status,
-    anchorEl,
-    openMenuStatus,
-    closeMenuStatus,
-    changeStatus,
     userAttr
   } = props;
   const [transform, setTransform] = useState(0);
   const refSidebar = useRef(null);
+  const userDetail = JSON.parse(localStorage.getItem('userDetail'));
+  const [userName, setUserName] = useState('')
 
-  const setStatus = st => {
-    switch (st) {
-      case 'online':
-        return classes.online;
-      case 'idle':
-        return classes.idle;
-      case 'bussy':
-        return classes.bussy;
-      default:
-        return classes.offline;
-    }
-  };
+  // const setStatus = st => {
+  //   switch (st) {
+  //     case 'online':
+  //       return classes.online;
+  //     case 'idle':
+  //       return classes.idle;
+  //     case 'bussy':
+  //       return classes.bussy;
+  //     default:
+  //       return classes.offline;
+  //   }
+  // };
 
   const handleScroll = (event) => {
     setTransform(event.target.scrollTop);
@@ -52,11 +45,14 @@ function SidebarContent(props) {
 
   useEffect(() => {
     refSidebar.current.addEventListener('scroll', handleScroll);
-
+    if (userDetail) {
+      setUserName(userDetail.name);
+    }
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
+    
+  }, [userName]);
 
   return (
     <div className={classNames(classes.drawerInner, !drawerPaper ? classes.drawerPaperClose : '')}>
@@ -66,13 +62,13 @@ function SidebarContent(props) {
           style={{ opacity: 1 - (transform / 100), marginTop: transform * -0.3 }}
         >
           <Avatar
-            alt={userAttr.name}
+            alt={userAttr?.name}
             src={userAttr.avatar}
             className={classNames(classes.avatar, classes.bigAvatar)}
           />
           <div>
-            <h4>{userAttr.name}</h4>
-            <Button size="small" onClick={openMenuStatus}>
+            <p>{userName}</p>
+            {/* <Button size="small" onClick={openMenuStatus}>
               <i className={classNames(classes.dotStatus, setStatus(status))} />
               <FormattedMessage {...messages[status]} />
             </Button>
@@ -99,7 +95,7 @@ function SidebarContent(props) {
                 <i className={classNames(classes.dotStatus, classes.offline)} />
                 <FormattedMessage {...messages.offline} />
               </MenuItem>
-            </Menu>
+            </Menu> */}
           </div>
         </div>
       </div>

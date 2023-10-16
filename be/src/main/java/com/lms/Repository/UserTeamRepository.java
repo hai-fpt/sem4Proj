@@ -15,4 +15,6 @@ public interface UserTeamRepository extends JpaRepository<UserTeam, Long> {
     UserTeam getUserTeamByUser(User user);
 
     Page<UserTeam> getUserTeamByTeam(Team team, Pageable pageable);
+
+    void deleteByUser_Id(Long id);
 }

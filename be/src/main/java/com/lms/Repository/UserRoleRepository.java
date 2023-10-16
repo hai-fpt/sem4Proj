@@ -17,4 +17,7 @@ public interface UserRoleRepository extends JpaRepository<UserRole, UserRoleKey>
     List<UserRoleProjection> findRoleNameByUserId(@Param("userId") Long userId);
 
     List<UserRole> findByUser(User user);
+
+    void deleteByUser_Id(Long id);
+
 }

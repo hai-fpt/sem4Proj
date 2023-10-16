@@ -24,4 +24,6 @@ public class Team {
 
     private List<Long> userList;
 
+    private String department;
+
 }

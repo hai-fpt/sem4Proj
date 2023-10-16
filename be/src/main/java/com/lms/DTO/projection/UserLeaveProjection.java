@@ -27,6 +27,10 @@ public interface UserLeaveProjection {
 
 	ApprovalStatus getStatus();
 
+    String getReason();
+
+    String getRejectedReason();
+
     List<FileStorage> getAttachedFiles();
     @JsonFormat(pattern = JSON_VIEW_DATE_FORMAT)
     LocalDateTime getCreatedDate();

@@ -21,8 +21,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<UserProjection> findByEmail(String email);
     Page<UserProjection> getUserByCreatedDateBetween(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
-    @Query("select ut from UserTeam ut where ut.team.id = (select ut2.team.id from UserTeam ut2 where ut2.user.id = :userId)")
-    Page<UserProjection> getUserByTeam(@Param("userId") Long id, Pageable pageable);
+//    @Query("select ut from UserTeam ut where ut.team.id = (select ut2.team.id from UserTeam ut2 where ut2.user.id = :userId)")
+    @Query("select u from User u " +
+            "join u.userTeams ut " +
+            "join ut.team t " +
+            "where t.manager.id = :userId")
+    List<User> getUserByTeam(@Param("userId") Long id);
 
     @Query("select u from User u where " +
             "(lower(u.name) like %:keyword% " +
@@ -30,7 +34,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "or lower(u.rank) like %:keyword% " +
             "or u.id in (select ut.user.id from UserTeam ut join ut.team t " +
             "where lower(t.teamName) like %:keyword%)")
-    Page<UserProjection> searchUser(@Param("keyword") String keyword, Pageable pageable);
+    List<User> searchUser(@Param("keyword") String keyword);
 
     @Query("select ut.team from UserTeam ut where ut.user.id = :userId")
     List<Team> getTeamByUser(@Param("userId") Long id);

@@ -15,10 +15,12 @@ const styles = theme => ({
   descBlock: {
     display: 'flex',
     alignItems: 'center',
-    marginBottom: theme.spacing(5),
     [theme.breakpoints.down('sm')]: {
-      marginBottom: theme.spacing(3),
+      marginBottom: theme.spacing(2),
     }
+  },
+  haveTitle:{
+    marginBottom: 16
   },
   titleText: {
     flex: 1
@@ -39,7 +41,8 @@ const styles = theme => ({
     paddingTop: theme.spacing(0.5),
     [theme.breakpoints.down('xs')]: {
       textAlign: 'center'
-    }
+    },
+    fontSize: 18
   },
   content: {
     marginTop: theme.spacing(2),
@@ -81,8 +84,8 @@ const styles = theme => ({
   iconTitle: {
     borderRadius: '50%',
     background: theme.palette.background.default,
-    width: 48,
-    height: 48,
+    width: 46,
+    height: 46,
     textAlign: 'center',
     lineHeight: '44px',
     verticalAlign: 'middle',

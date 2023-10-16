@@ -1,0 +1,1 @@
+export const SET_USER_API_DATA = 'SET_USER_API_DATA';

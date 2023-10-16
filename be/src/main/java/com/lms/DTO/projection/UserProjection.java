@@ -30,7 +30,7 @@ public interface UserProjection {
     @JsonFormat(pattern = JSON_VIEW_DATE_FORMAT)
     LocalDateTime getJoinedDate();
     String getDepartment();
-    boolean isStatus();
+    Boolean getStatus();
     @JsonFormat(pattern = JSON_VIEW_DATE_FORMAT)
     LocalDateTime getResignedDate();
 
@@ -63,4 +63,6 @@ public interface UserProjection {
     String getUpdatedBy();
 
     List<UserTeamTeamProjection> getUserTeams();
+
+    AvatarProjection getAvatar();
 }

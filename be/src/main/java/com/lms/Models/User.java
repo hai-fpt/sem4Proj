@@ -64,7 +64,7 @@ public class User implements UserDetails {
 
 
     @Column(nullable = false)
-    private boolean status;
+    private Boolean status;
 
     @Column(name = "resigned_date")
     private LocalDateTime resignedDate;
@@ -92,7 +92,7 @@ public class User implements UserDetails {
     @Transient
     private List<String> role_alias;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "user")
     private List<UserTeam> userTeams = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
@@ -100,6 +100,9 @@ public class User implements UserDetails {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<UserRole> userRoles = new ArrayList<>();
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.PERSIST)
+    private Avatar avatar;
 
     public String getExperienceDateAsString() {
         return getPeriod(getUniversityGraduateDate());

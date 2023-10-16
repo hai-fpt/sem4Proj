@@ -11,6 +11,7 @@ import javax.mail.MessagingException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class EmailServiceImpl extends BaseSendMail implements EmailService {
@@ -46,10 +47,35 @@ public class EmailServiceImpl extends BaseSendMail implements EmailService {
 		Map<String, Object> properties = new HashMap<>();
 		properties.put("dears", process.getDearTos());
 		properties.put("status", process.getStatus());
+		properties.put("reason", process.getRejectedReason());
 		properties.put("processBy", process.getProcessBysAsArray());
 		properties.put("link", process.getLink());
-		String subject = process.getSubject().isEmpty() ? "[VDC] Leave request process" : process.getSubject();
+//		String subject = process.getSubject().isEmpty() ? "[VDC] Leave request process" : process.getSubject();
 		List<String> ccTos = process.getCcTos();
-		sendEmail(sendTos.toArray(new String[sendTos.size()]), ccTos.toArray(new String[ccTos.size()]), subject, "leave_approval.html", properties);
+		sendEmail(sendTos.toArray(new String[sendTos.size()]), ccTos.toArray(new String[ccTos.size()]), process.getSubject(), "leave_approval.html", properties);
 	}
+
+	@Override
+	public CompletableFuture<Void> sendRequestAsync(LeaveRequest leaveRequest) {
+		return CompletableFuture.runAsync(() -> {
+			try {
+				sendRequest(leaveRequest);
+			} catch (InvalidReceiverException | MessagingException e) {
+				throw new RuntimeException(e);
+			}
+		});
+	}
+
+	@Override
+	public CompletableFuture<Void> sendApprovalAsync(LeaveProcess leaveProcess) {
+		return CompletableFuture.runAsync(() -> {
+			try {
+				sendApproval(leaveProcess);
+			} catch (MessagingException e) {
+				throw new RuntimeException(e);
+			}
+		});
+	}
+
+
 }

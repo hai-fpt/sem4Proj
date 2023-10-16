@@ -69,9 +69,55 @@ export const NotFoundDedicated = loadable(() =>
     fallback: <Loading />,
   });
 
+export const Users = loadable(() =>
+  import ('./Pages/Users/UsersManagement/index'), {
+    fallback: <Loading />,
+});
+
+export const UserProfile = loadable(() =>
+  import ('./Pages/Users/Profile/index'), {
+    fallback: <Loading />,
+});
+
 export const Holiday = loadable(() =>
 import ('./Pages/Holiday/index'), {
   fallback: <Loading />,
+});
+
+export const Team = loadable(() =>
+import ('./Pages/Team/index'), {
+  fallback: <Loading />,
+});
+
+export const Roles = loadable(() =>
+import ('./Pages/Roles/index'), {
+  fallback: <Loading />,
+});
+
+export const LeaveType = loadable(() =>
+import ('./Pages/LeaveType/index'), {
+  fallback: <Loading/>,
+});
+
+export const ApplyLeave = loadable(() =>
+import ('./Pages/Leaves/Apply'), {
+  fallback: <Loading />,
+});
+
+export const MyLeave = loadable(() => 
+import ('./Pages/Leaves/MyLeave/index'), {
+  fallback: <Loading/>,
+});
+
+export const LeaveManagement = loadable(() => 
+import ('./Pages/Leaves/LeaveManagement/index'), {
+  fallback: <Loading/>,
+});
+
+
+export const Department = loadable(() =>
+import('./Pages/Department/index'), {
+    fallback: <Loading/>,
 });
 //
 

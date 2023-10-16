@@ -35,6 +35,9 @@ public class LeaveApproval {
     @Enumerated(EnumType.STRING)
     private ApprovalStatus status;
 
+    @Transient
+    private String description;
+
     @Column(name = "created_date", nullable = false, updatable = false)
     @CreationTimestamp
     private LocalDateTime createdDate;

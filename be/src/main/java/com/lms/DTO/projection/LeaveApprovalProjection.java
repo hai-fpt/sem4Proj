@@ -3,7 +3,6 @@ package com.lms.dto.projection;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.lms.dto.ApprovalStatus;
-import com.lms.dto.User;
 import com.lms.models.UserLeave;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -15,13 +14,13 @@ public interface LeaveApprovalProjection {
     Long getId();
     UserLeaveProjection getUserLeave();
 
-    User getManagerId();
+    UserProjection getManagerId();
 
     ApprovalStatus getStatus();
     @JsonFormat(pattern = JSON_VIEW_DATE_FORMAT)
     LocalDateTime getCreatedDate();
 
-    @JsonFormat(pattern = JSON_VIEW_DATE_FORMAT)
+//    @JsonFormat(pattern = JSON_VIEW_DATE_FORMAT)
     LocalDateTime getUpdatedDate();
 
     String getUpdatedBy();

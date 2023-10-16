@@ -49,4 +49,8 @@ public class Team {
     @OneToMany(mappedBy = "team")
     @JsonIgnore
     private List<UserTeam> userTeams = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "department_id")
+    private Department department;
 }

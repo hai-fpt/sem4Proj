@@ -10,7 +10,6 @@ import styles from './papperStyle-jss';
 function PapperBlock(props) {
   const {
     classes,
-    title,
     desc,
     children,
     whiteBg,
@@ -42,14 +41,14 @@ function PapperBlock(props) {
         }
         elevation={0}
       >
-        <div className={classes.descBlock}>
+        <div className={`${classes.descBlock} ${children ? classes.haveTitle : ''}`}>
           <span className={classes.iconTitle}>
             <Icon>{icon}</Icon>
           </span>
           <div className={classes.titleText}>
-            <Typography variant="h6" component="h2" className={classes.title}>
+            {/* <Typography variant="h6" component="h2" className={classes.title}>
               {title}
-            </Typography>
+            </Typography> */}
             <Typography component="p" className={classes.description}>
               {desc}
             </Typography>
@@ -65,10 +64,10 @@ function PapperBlock(props) {
 
 PapperBlock.propTypes = {
   classes: PropTypes.object.isRequired,
-  title: PropTypes.string.isRequired,
+  title: PropTypes.string,
   desc: PropTypes.string.isRequired,
   icon: PropTypes.string,
-  children: PropTypes.node.isRequired,
+  children: PropTypes.node,
   whiteBg: PropTypes.bool,
   colorMode: PropTypes.string,
   noMargin: PropTypes.bool,

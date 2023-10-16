@@ -11,11 +11,14 @@ import com.lms.repository.UserRepository;
 import com.lms.utils.ProjectionMapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,7 +26,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-public class LeaveApprovalServiceImpl implements LeaveApprovalService{
+public class LeaveApprovalServiceImpl implements LeaveApprovalService {
 
     private final LeaveApprovalRepository leaveApprovalRepository;
     private final UserLeaveRepository userLeaveRepository;
@@ -66,21 +69,22 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService{
         com.lms.models.LeaveApproval leaveApproval = leaveApprovalOptional.get();
         leaveApproval.setStatus(leaveApprovalDTO.getStatus());
         leaveApproval.setUpdatedBy(leaveApprovalDTO.getUpdatedBy());
-        com.lms.models.LeaveApproval savedEntity = leaveApprovalRepository.save(leaveApproval);
+        leaveApproval.setDescription(leaveApprovalDTO.getDescription());
+        leaveApprovalRepository.save(leaveApproval);
         com.lms.models.User user = leaveApproval.getManagerId();
 
-        User userDTO = new User();
-        userDTO.setName(user.getName());
-        LeaveProcess leaveProcess = new LeaveProcess();
-        leaveProcess.setStatus(leaveApproval.getStatus());
-        leaveProcess.setProcessBy(userDTO);
-        leaveProcess.setDearTos(Collections.singletonList(leaveApproval.getUserLeave().getUser().getName()));
-        leaveProcess.setSendTos(Collections.singletonList(leaveApproval.getUserLeave().getUser().getEmail()));
-        try {
-            emailService.sendApproval(leaveProcess);
-        } catch (MessagingException | InvalidReceiverException e) {
-            throw new RuntimeException(e);
-        }
+//        User userDTO = new User();
+//        userDTO.setName(user.getName());
+//        LeaveProcess leaveProcess = new LeaveProcess();
+//        leaveProcess.setStatus(leaveApproval.getStatus());
+//        leaveProcess.setProcessBy(userDTO);
+//        leaveProcess.setDearTos(Collections.singletonList(leaveApproval.getUserLeave().getUser().getName()));
+//        leaveProcess.setSendTos(Collections.singletonList(leaveApproval.getUserLeave().getUser().getEmail()));
+//        try {
+//            emailService.sendApproval(leaveProcess);
+//        } catch (MessagingException | InvalidReceiverException e) {
+//            throw new RuntimeException(e);
+//        }
 
         //push notification
         List<NotificationInfo> notiInfos = new ArrayList<>();
@@ -112,11 +116,12 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService{
         List<Long> managerIds =
                 approvals.stream().map(approval -> approval.getManagerId().getId()).collect(Collectors.toList());
         List<com.lms.models.User> managers = userRepository.findAllById(managerIds);
-        ModelMapper modelMapper = new ModelMapper();
         List<User> managerDTOs = managers.stream()
                 .map(manager -> {
-                    manager.setUserRoles(null);
-                    User managerDTO = modelMapper.map(manager, User.class);
+                    User managerDTO = new User();
+                    managerDTO.setId(manager.getId());
+                    managerDTO.setName(manager.getName());
+                    managerDTO.setEmail(manager.getEmail());
                     return managerDTO;
                 })
                 .collect(Collectors.toList());
@@ -150,15 +155,14 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService{
 
                     //Email for overall approved
                     LeaveProcess leaveProcess = new LeaveProcess();
+                    String link = configurationService.getHostAddress() + "leave-details/" + updatedLeave.getId();
+                    leaveProcess.setLink(link);
+                    leaveProcess.setSubject("[" + employee.getDepartment() + "] Leave Request Approved");
                     leaveProcess.setStatus(leaveApproval.getStatus());
                     leaveProcess.setProcessBys(managerDTOs);
                     leaveProcess.setDearTos(Collections.singletonList(leaveApproval.getUserLeave().getUser().getName()));
                     leaveProcess.setSendTos(Collections.singletonList(leaveApproval.getUserLeave().getUser().getEmail()));
-                    try {
-                        emailService.sendApproval(leaveProcess);
-                    } catch (MessagingException | InvalidReceiverException e) {
-                        throw new RuntimeException(e);
-                    }
+                    emailService.sendApprovalAsync(leaveProcess);
                 } else {
                     throw new NullPointerException("User leave request does not exists");
                 }
@@ -168,6 +172,7 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService{
             if (userLeave.isPresent()) {
                 UserLeave updatedLeave = userLeave.get();
                 updatedLeave.setStatus(ApprovalStatus.REJECTED);
+                updatedLeave.setRejectedReason(leaveApproval.getDescription());
                 UserLeave savedUserLeave = userLeaveRepository.save(updatedLeave);
 
                 //push notification for overall reject
@@ -189,24 +194,55 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService{
 
                 //Email for overall approved
                 LeaveProcess leaveProcess = new LeaveProcess();
+                String link = configurationService.getHostAddress() + "leave-details/" + updatedLeave.getId();
+                leaveProcess.setLink(link);
+                leaveProcess.setSubject("[" + employee.getDepartment() + "] Leave Request Rejected");
                 leaveProcess.setStatus(leaveApproval.getStatus());
                 leaveProcess.setProcessBys(managerDTOs);
+                leaveProcess.setRejectedReason(leaveApproval.getDescription());
                 leaveProcess.setDearTos(Collections.singletonList(leaveApproval.getUserLeave().getUser().getName()));
                 leaveProcess.setSendTos(Collections.singletonList(leaveApproval.getUserLeave().getUser().getEmail()));
-                try {
-                    emailService.sendApproval(leaveProcess);
-                } catch (MessagingException | InvalidReceiverException e) {
-                    throw new RuntimeException(e);
-                }
+                emailService.sendApprovalAsync(leaveProcess);
             }
         }
     }
 
     @Override
     public Page<LeaveApprovalProjection> getLeaveApproveByManagerId(Long id, Pageable pageable) {
-        return leaveApprovalRepository.findAllByManagerId(id, pageable);
+        List<com.lms.models.LeaveApproval> leaveApprovalList = leaveApprovalRepository.findAllByManagerId(id);
+        List<LeaveApprovalProjection> projections = new ArrayList<>();
+        for (com.lms.models.LeaveApproval leaveApproval : leaveApprovalList) {
+            LeaveApprovalProjection projection = ProjectionMapper.mapToLeaveApprovalProjection(leaveApproval);
+            projections.add(projection);
+        }
+        return new PageImpl<>(projections, pageable, projections.size());
     }
 
-    //TODO: click on date and show what requests there are
+    @Override
+    public Page<LeaveApprovalProjection> searchLeaveApproval(String keyword, Pageable pageable) {
+        List<LeaveApprovalProjection> projections = leaveApprovalRepository.searchLeaveApproval(keyword.toLowerCase());
+        return new PageImpl<>(projections, pageable, projections.size());
+    }
 
+    @Override
+    public Page<LeaveApprovalProjection> getLeaveApprovalByMonth(Long id, LocalDateTime dateTime, Pageable pageable) {
+        List<com.lms.models.LeaveApproval> leaveApprovalList = leaveApprovalRepository.getLeaveApprovalByMonth(id, dateTime);
+        List<LeaveApprovalProjection> projections = new ArrayList<>();
+        for (com.lms.models.LeaveApproval leaveApproval : leaveApprovalList) {
+            LeaveApprovalProjection projection = ProjectionMapper.mapToLeaveApprovalProjection(leaveApproval);
+            projections.add(projection);
+        }
+        return new PageImpl<>(projections, pageable, projections.size());
+    }
+
+    @Override
+    public Page<LeaveApprovalProjection> getLeaveApprovalByDate(Long id, LocalDateTime dateTime, Pageable pageable) {
+        List<com.lms.models.LeaveApproval> leaveApprovalList = leaveApprovalRepository.getLeaveApprovalByDay(id, dateTime);
+        List<LeaveApprovalProjection> projections = new ArrayList<>();
+        for (com.lms.models.LeaveApproval leaveApproval : leaveApprovalList) {
+            LeaveApprovalProjection projection = ProjectionMapper.mapToLeaveApprovalProjection(leaveApproval);
+            projections.add(projection);
+        }
+        return new PageImpl<>(projections, pageable, projections.size());
+    }
 }

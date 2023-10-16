@@ -11,6 +11,14 @@ import history from '../utils/history';
 import authReducer from './modules/authReducer';
 import uiReducer from './modules/uiReducer';
 import initval from './modules/initFormReducer';
+import applyLeaveReducer from './modules/applyLeaveReducer';
+import envDataReducer from './modules/envDataReducer';
+import teamReducer from './modules/teamReducers'
+import detailProfileReducer from './modules/detailProfileReducer'
+import departmentReducer from "./modules/departmentReducer";
+import managerReducer from "./modules/managerReducers";
+import userReducer from "./modules/userReducers";
+import applyLeaveApiReducer from "./modules/applyLeaveApiReducer";
 
 /**
  * Creates the main reducer with the dynamically injected ones
@@ -21,8 +29,16 @@ export default function createReducer(injectedReducers = {}) {
     ui: uiReducer,
     initval,
     authReducer,
+    applyLeaveReducer,
     language: languageProviderReducer,
     router: connectRouter(history),
+    env: envDataReducer,
+    team: teamReducer,
+    department: departmentReducer,
+    manager: managerReducer,
+    users: userReducer,
+    applyLeaveApi: applyLeaveApiReducer,
+    detailProfile: detailProfileReducer,
     ...injectedReducers,
   });
 

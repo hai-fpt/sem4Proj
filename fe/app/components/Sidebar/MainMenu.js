@@ -9,7 +9,6 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
-import ListSubheader from '@material-ui/core/ListSubheader';
 import Typography from "@material-ui/core/Typography";
 import Collapse from '@material-ui/core/Collapse';
 import Chip from '@material-ui/core/Chip';
@@ -17,6 +16,8 @@ import Icon from '@material-ui/core/Icon';
 import ExpandLess from '@material-ui/icons/ExpandLess';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import styles from './sidebar-jss';
+import { useSelector } from 'react-redux';
+
 
 const LinkBtn = React.forwardRef(function LinkBtn(props, ref) { // eslint-disable-line
   return <NavLink to={props.to} {...props} innerRef={ref} />; // eslint-disable-line
@@ -24,6 +25,7 @@ const LinkBtn = React.forwardRef(function LinkBtn(props, ref) { // eslint-disabl
 
 // eslint-disable-next-line
 function MainMenu(props) {
+  const userRole = useSelector(state => state.detailProfile.userRoles)?.map(item => item.role.name);
   const {
     classes,
     openSubMenu,
@@ -38,8 +40,10 @@ function MainMenu(props) {
     loadTransition(false);
   };
 
-
   const getMenus = menuArray => menuArray.map((item, index) => {
+    if (!filterRoles(item.roles)) {
+      return ;
+    }
     if (item.child || item.linkParent) {
       return (
         <div key={index.toString()}>
@@ -90,18 +94,6 @@ function MainMenu(props) {
         </div>
       );
     }
-    if (item.title) {
-      return (
-        <ListSubheader
-          disableSticky
-          key={index.toString()}
-          component="div"
-          className={classes.title}
-        >
-          {item.name}
-        </ListSubheader>
-      );
-    }
     return (
       <ListItem
         key={index.toString()}
@@ -114,9 +106,9 @@ function MainMenu(props) {
         onClick={() => handleClick()}
       > 
         {item.icon && (
-              <ListItemIcon className={classes.icon}>
-                <Icon>{item.icon}</Icon>
-              </ListItemIcon>
+          <ListItemIcon className={classes.icon}>
+            <Icon>{item.icon}</Icon>
+          </ListItemIcon>
         )}
         <ListItemText classes={{ primary: classes.primary }}>
           <Typography variant="body1" style={{ fontSize: '14px' }}>
@@ -129,6 +121,16 @@ function MainMenu(props) {
       </ListItem>
     );
   });
+
+  const filterRoles = (roles) => {
+    if (userRole?.includes('ADMIN')) {
+      return true;
+    }
+    else {
+      const hasAccess = roles?.every((value) => userRole?.includes(value));
+      return hasAccess;
+    }
+  }
 
   return (
     <div>

@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @RestController
@@ -30,6 +31,9 @@ public class Login {
             return ResponseEntity.status(HttpStatus.OK).body(userProjection);
         }
         user.setRank(RankEnum.EMPLOYEE);
+        user.setStatus(true);
+        user.setJoinedDate(LocalDateTime.now());
+        user.setDepartment("VDC");
         UserProjection newUser = userServiceImpl.createUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
     }

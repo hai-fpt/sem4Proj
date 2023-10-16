@@ -1,7 +1,9 @@
 package com.lms.service;
 
 import com.lms.dto.*;
+import com.lms.dto.projection.LeaveManagerProjection;
 import com.lms.dto.projection.UserLeaveProjection;
+import com.lms.dto.projection.UserProjection;
 import com.lms.exception.NotFoundByIdException;
 import com.lms.models.User;
 import org.springframework.data.domain.Page;
@@ -29,4 +31,8 @@ public interface UserLeaveService {
     DashboardCalendar getUserLeaveRequestList(Long id, DateRange dateRange);
 
     List<UserLeaveProjection> getUserLeaveByIdAndStatusAndType(Long id, ApprovalStatus status, boolean affects);
+
+    List<SelfLeave> getSelfLeave(Long id);
+
+    List<LeaveManagerProjection> getUserLeaveManagers(Long id);
 }

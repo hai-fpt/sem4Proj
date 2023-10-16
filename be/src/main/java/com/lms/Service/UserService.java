@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserService {
-    Page<UserProjection> getAllUsers(Pageable pageable);
+    List<UserProjection> getAllUsers(Pageable pageable);
 
     Optional<com.lms.models.User> getUserById(Long id);
 
@@ -47,4 +47,6 @@ public interface UserService {
     com.lms.models.User updateMyProflie(Long id, MyProfile myProfile) throws NotFoundByIdException;
 
     List<com.lms.models.Role.RoleEnum> getRolesOfUser(Long id);
+
+    void deleteUserTeamByUserId(Long id);
 }

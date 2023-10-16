@@ -57,4 +57,10 @@ public class ProjectionMapper {
         DepartmentProjection projection = pf.createProjection(DepartmentProjection.class, department);
         return projection;
     }
+
+    public static LeaveCommentProjection mapToLeaveCommentProjection(LeaveComment comment) {
+        ProjectionFactory pf = new SpelAwareProxyProjectionFactory();
+        LeaveCommentProjection projection = pf.createProjection(LeaveCommentProjection.class, comment);
+        return projection;
+    }
 }

@@ -39,10 +39,11 @@ public class ControllerUtils {
     }
 
     public Pageable sortPage(Pageable pageable, String field) {
+        Sort sort = Sort.by(Sort.Direction.DESC, field);
         return PageRequest.of(
                 pageable.getPageNumber(),
                 pageable.getPageSize(),
-                Sort.by(Sort.Direction.DESC, field)
+                sort
         );
     }
 

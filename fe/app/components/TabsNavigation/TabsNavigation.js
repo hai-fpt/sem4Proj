@@ -6,29 +6,40 @@ import { makeStyles } from '@material-ui/core/styles';
 
 const useStyles = makeStyles({
     tabs: {
-      backgroundColor: '#fafafa', // custom background color
-      width: 'fit-content'
+      backgroundColor: 'rgba(0, 0, 0, 0.05)', // custom background color
+      width: 'fit-content',
+      fontSize: 12,
+      minHeight: '36px !important',
+      lineHeight: 1,
+    },
+    childTabs: {
+      backgroundColor: 'rgba(0, 0, 0, 0.05)', // custom background color
+      width: 'fit-content',
+      fontSize: 12,
+      minHeight: '36px !important',
+      lineHeight: 1,
     },
     selectedTab:{
       color: 'white !important',
-      backgroundColor: '#03a9f4',
+      backgroundColor: '#03a9f4 !important',
+      borderRight: 'none !important',
+    },
+    borderedTab: {
+      borderRight: '1px solid white',
     }
 
 });
 
-
 const TabsNavigation = (props) => {
     const classes = useStyles();
     const {
-      tabItems
+      tabItems, tabValuePropsFromChild, tabValuePropsFromParent
     } = props;
 
-    const [value, setValue] = useState(0);
-
-
     const handleChange = (event, newValue) => {
-      setValue(newValue);
+      tabValuePropsFromChild(newValue);
     };
+
   
     function a11yProps(index) {
       return {
@@ -39,7 +50,7 @@ const TabsNavigation = (props) => {
   
     return (
       <Tabs
-        value={value}
+        value={tabValuePropsFromParent}
         onChange={handleChange}
         indicatorColor="primary"
         textColor="primary"
@@ -50,12 +61,17 @@ const TabsNavigation = (props) => {
         >
           { 
             tabItems.map((tabItem) => {
+              const isLastTab = tabItem.index === tabItems.length - 1;
+              const tabClasses = `${classes.childTabs} ${!isLastTab && tabItems.length > 2 ? classes.borderedTab : ''}`;
               return (
                 <Tab 
-                  key={tabItem.value} 
-                  classes={{ selected: classes.selectedTab }} 
+                  key={tabItem.index} 
+                  classes={{ 
+                    root: tabClasses,
+                    selected: classes.selectedTab,
+                  }} 
                   label={tabItem.label} 
-                  {...a11yProps(tabItem.value)}
+                  {...a11yProps(tabItem.index)}
                 />
               )
             })

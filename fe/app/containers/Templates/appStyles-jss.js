@@ -108,7 +108,7 @@ const styles = theme => ({
     height: '100%',
     position: 'relative',
     '& > div': {
-      willChange: 'inherit !important' // hack for floating form issue when expaded
+      willChange: 'inherit !important', // hack for floating form issue when expaded
     },
     '&$sidebarLayout': {
       paddingTop: theme.spacing(8),
@@ -135,7 +135,7 @@ const styles = theme => ({
     opacity: 0.5
   },
   contentPaddingLeft: {
-    paddingLeft: theme.spacing(10),
+    paddingLeft: theme.spacing(9),
     paddingRight: theme.spacing(2),
   },
   contentPaddingRight: {
@@ -177,10 +177,10 @@ const styles = theme => ({
   light: {},
   pageTitle: {
     padding: theme.spacing(1),
-    paddingBottom: theme.spacing(3),
+    paddingBottom: theme.spacing(2),
     [theme.breakpoints.up('lg')]: {
       display: 'flex',
-      alignItems: 'flex-end',
+      alignItems: 'center',
     },
     '& h4': {
       fontWeight: 700,
@@ -194,6 +194,9 @@ const styles = theme => ({
       }
     },
   },
+  h100: {
+    height: '100%',
+  }
 });
 
 export default styles;

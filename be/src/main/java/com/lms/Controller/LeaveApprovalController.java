@@ -11,9 +11,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 
 import static com.lms.utils.Constants.*;
@@ -62,5 +68,35 @@ public class LeaveApprovalController {
         Pageable sortedPageable = controllerUtils.sortPage(pageable, "updatedDate");
         Page<LeaveApprovalProjection> leaveApprovals = leaveApprovalService.getLeaveApproveByManagerId(id, sortedPageable);
         return ResponseEntity.ok(leaveApprovals);
+    }
+
+    @GetMapping("leave/apporval/search")
+    public ResponseEntity<Page<LeaveApprovalProjection>> searchLeaveApproval(@RequestParam(value = "keyword") String keyword, @PageableDefault(size = 10) Pageable pageable) {
+        Pageable sorted = controllerUtils.sortPage(pageable, "updatedDate");
+        return ResponseEntity.ok(leaveApprovalService.searchLeaveApproval(keyword, sorted));
+    }
+
+    @GetMapping("/leave/approval/month")
+    public ResponseEntity<Page<LeaveApprovalProjection>> getLeaveApprovalByMonth(@RequestParam("id") Long id,
+                                                                                 @RequestParam("date") @DateTimeFormat(pattern = JSON_VIEW_DATE_FORMAT) LocalDateTime date,
+                                                                                 @PageableDefault(size = 10) Pageable pageable) {
+        if (!controllerUtils.validateRequestedUser(id)) {
+            throw new NullPointerException(USER_NOT_EXISTS);
+        }
+        Pageable sorted = controllerUtils.sortPage(pageable, "updatedDate");
+        Page<LeaveApprovalProjection> projections = leaveApprovalService.getLeaveApprovalByMonth(id, date, sorted);
+        return ResponseEntity.ok(projections);
+    }
+
+    @GetMapping("/leave/approval/day")
+    public ResponseEntity<Page<LeaveApprovalProjection>> getLeaveApprovalByDay(@RequestParam("id") Long id,
+                                                                               @RequestParam("date") @DateTimeFormat(pattern = JSON_VIEW_DATE_FORMAT) LocalDateTime date,
+                                                                               @PageableDefault(size = 10) Pageable pageable) {
+        if (!controllerUtils.validateRequestedUser(id)) {
+            throw new NullPointerException(USER_NOT_EXISTS);
+        }
+        Pageable sorted = controllerUtils.sortPage(pageable, "updatedDate");
+        Page<LeaveApprovalProjection> projections = leaveApprovalService.getLeaveApprovalByDate(id, date, sorted);
+        return ResponseEntity.ok(projections);
     }
 }

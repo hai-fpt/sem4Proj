@@ -57,12 +57,17 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 .getBody();
 
         User user = userRepository.findUserByEmail(claims.getSubject()).orElse(null);
-        List<Role.RoleEnum> roles = userRepository.getRolesOfUser(user.getId());
         List<GrantedAuthority> authorities = new ArrayList<>();
-        for (Role.RoleEnum role : roles) {
-            String roleString = "ROLE_" + role.toString();
-            GrantedAuthority authority = new SimpleGrantedAuthority(roleString);
-            authorities.add(authority);
+        if (user == null) {
+            GrantedAuthority userAuthority = new SimpleGrantedAuthority("ROLE_USER");
+            authorities.add(userAuthority);
+        } else {
+            List<Role.RoleEnum> roles = userRepository.getRolesOfUser(user.getId());
+            for (Role.RoleEnum role : roles) {
+                String roleString = "ROLE_" + role.toString();
+                GrantedAuthority authority = new SimpleGrantedAuthority(roleString);
+                authorities.add(authority);
+            }
         }
         User userDetails = new User();
         userDetails.setEmail(claims.getSubject());

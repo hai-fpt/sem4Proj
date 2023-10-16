@@ -12,6 +12,8 @@ module.exports = (app, options) => {
   } else {
     const webpackConfig = require('../../internals/webpack/webpack.dev.babel');
     const addDevMiddlewares = require('./addDevMiddlewares');
+    const { locals } = options;
+    app.locals = { ...app.locals, ...locals }; // Pass locals to app.locals
     addDevMiddlewares(app, webpackConfig);
   }
 

@@ -4,8 +4,10 @@ import com.lms.dto.Team;
 import com.lms.dto.projection.ManagerProjection;
 import com.lms.dto.projection.TeamProjection;
 import com.lms.dto.projection.UserProjection;
+import com.lms.models.Department;
 import com.lms.models.User;
 import com.lms.models.UserTeam;
+import com.lms.repository.DepartmentRepository;
 import com.lms.repository.TeamRepository;
 import com.lms.repository.UserRepository;
 import com.lms.repository.UserTeamRepository;
@@ -27,12 +29,14 @@ public class TeamServiceImpl implements TeamService {
     private final TeamRepository teamRepository;
     private final UserRepository userRepository;
     private final UserTeamRepository userTeamRepository;
+    private final DepartmentRepository departmentRepository;
 
     @Autowired
-    public TeamServiceImpl(TeamRepository teamRepository, UserRepository userRepository, UserTeamRepository userTeamRepository) {
+    public TeamServiceImpl(TeamRepository teamRepository, UserRepository userRepository, UserTeamRepository userTeamRepository, DepartmentRepository departmentRepository) {
         this.teamRepository = teamRepository;
         this.userRepository = userRepository;
         this.userTeamRepository = userTeamRepository;
+        this.departmentRepository = departmentRepository;
     }
 
     @Override
@@ -97,6 +101,7 @@ public class TeamServiceImpl implements TeamService {
     @Override
     public TeamProjection updateTeam(Team team) {
         Optional<User> manager = userRepository.findById(team.getManager());
+        Department department = departmentRepository.findDepartmentByName(team.getDepartment());
         if (manager.isEmpty()) {
             throw new NullPointerException(USER_NOT_EXISTS);
         }
@@ -105,6 +110,7 @@ public class TeamServiceImpl implements TeamService {
         teamEntity.setManager(manager.get());
         teamEntity.setUpdatedBy(team.getUpdatedBy());
         teamEntity.setUpdatedDate(LocalDateTime.now());
+        teamEntity.setDepartment(department);
         com.lms.models.Team updated = teamRepository.save(teamEntity);
         return ProjectionMapper.mapToTeamProjection(updated);
     }

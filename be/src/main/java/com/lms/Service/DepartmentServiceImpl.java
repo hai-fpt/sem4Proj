@@ -4,16 +4,17 @@ import com.lms.dto.Department;
 import com.lms.dto.projection.DepartmentProjection;
 import com.lms.exception.DuplicateException;
 import com.lms.exception.NotFoundByIdException;
+import com.lms.models.Team;
 import com.lms.models.User;
 import com.lms.repository.DepartmentRepository;
+import com.lms.repository.TeamRepository;
 import com.lms.repository.UserRepository;
-import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -25,9 +26,13 @@ public class DepartmentServiceImpl implements DepartmentService{
     @Autowired
     private final UserRepository userRepository;
 
-    public DepartmentServiceImpl(DepartmentRepository departmentRepository, UserRepository userRepository) {
+    @Autowired
+    private final TeamRepository teamRepository;
+
+    public DepartmentServiceImpl(DepartmentRepository departmentRepository, UserRepository userRepository, TeamRepository teamRepository) {
         this.departmentRepository = departmentRepository;
         this.userRepository = userRepository;
+        this.teamRepository = teamRepository;
     }
 
     @Override
@@ -51,11 +56,21 @@ public class DepartmentServiceImpl implements DepartmentService{
         if (!Objects.isNull(departmentByName)) {
             throw new DuplicateException("Department duplicate with name: " + departmentName);
         }
+        List<Team> teamList = teamRepository.findAllById(department.getTeamList());
+        if (teamList.size() != department.getTeamList().size()) {
+            throw new NotFoundByIdException("Team not found");
+        }
         User manager = user.get();
         com.lms.models.Department departmentEntity = new com.lms.models.Department();
         departmentEntity.setName(department.getName());
         departmentEntity.setManager(manager);
-        return departmentRepository.save(departmentEntity);
+        com.lms.models.Department newDepartment = departmentRepository.save(departmentEntity);
+        for (Team team : teamList) {
+            team.setDepartment(newDepartment);
+        }
+        teamRepository.saveAll(teamList);
+        newDepartment.setTeams(teamList);
+        return departmentRepository.save(newDepartment);
     }
 
     @Override
@@ -73,8 +88,17 @@ public class DepartmentServiceImpl implements DepartmentService{
         if(!Objects.isNull(departmentByName)) {
             throw new DuplicateException("Department duplicate with name: " + departmentName);
         }
+        List<Team> teamList = teamRepository.findAllById(department.getTeamList());
+        if (teamList.size() != department.getTeamList().size()) {
+            throw new NotFoundByIdException("Team not found");
+        }
         User manager = user.get();
         com.lms.models.Department departmentEntity = departmentOptional.get();
+        for (Team team : teamList) {
+            team.setDepartment(departmentEntity);
+        }
+        teamRepository.saveAll(teamList);
+        departmentEntity.setTeams(teamList);
         departmentEntity.setName(department.getName());
         departmentEntity.setManager(manager);
         return departmentRepository.save(departmentEntity);

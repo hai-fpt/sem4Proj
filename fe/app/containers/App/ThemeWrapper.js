@@ -50,7 +50,7 @@ function ThemeWrapper(props) {
     setLoading(0);
     setTimeout(() => { setLoading(100); }, 2000);
   }, []);
-console.log('stylesprovider');
+
   return (
     <StylesProvider jss={jss}>
       <MuiThemeProvider theme={theme}>

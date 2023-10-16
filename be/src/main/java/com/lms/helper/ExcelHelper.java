@@ -102,7 +102,7 @@ public class ExcelHelper {
                             .collect(Collectors.joining(","));
                     row.createCell(5).setCellValue(userTeamStr);
                     row.createCell(6).setCellValue(user.getExperienceDateAsString());
-                    row.createCell(7).setCellValue(user.isStatus());
+                    row.createCell(7).setCellValue(user.getStatus());
                     row.createCell(8).setCellValue(user.getUniversity());
                     row.createCell(9).setCellValue(user.getRank().toString());
                     Cell cellDepartment = row.createCell(10);

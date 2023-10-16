@@ -58,7 +58,7 @@ function Dashboard(props) {
 
   useEffect(() => {
     // Adjust min height
-    setAppHeight(window.innerHeight + 112);
+    setAppHeight(window.innerHeight);
 
     // Set expanded sidebar menu
     const currentPath = history.location.pathname;

@@ -15,6 +15,7 @@ const ngrok = (isDev && process.env.ENABLE_TUNNEL) || argv.tunnel
   : false;
 const { resolve } = require('path');
 const app = express();
+require('dotenv').config();
 
 // If you need a backend, e.g. an API, add your custom backend-specific middleware here
 // app.use('/api', myApi);
@@ -43,6 +44,11 @@ app.use(favicon(path.join('public', 'favicons', 'favicon.ico')));
 setup(app, {
   outputPath: resolve(process.cwd(), 'build'),
   publicPath: '/',
+  locals: {
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+    BASE_API_URL: process.env.BASE_API_URL,
+    // Add other environment variables you want to pass to the frontend
+  }
 });
 
 // get the intended host and port number, use localhost and port 3000 if not provided

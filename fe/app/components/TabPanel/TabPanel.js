@@ -1,32 +1,40 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 
 const TabPanel = (props) => {
-    const {
-      children, value, index, ...other
-    } = props;
-  
-    return (
+  const [renderKey, setRenderKey] = useState(0);
+  const {
+    tabIndex, tabValue, children, forceRender
+  } = props;
+
+  useEffect(() => {
+    if (forceRender) {
+      setRenderKey(prevKey => prevKey + 1);
+    }
+  }, [forceRender]);
+
+  return (
       <div
+        key={`${tabIndex}-${renderKey}`}
         role="tabpanel"
-        hidden={value !== index}
-        id={`scrollable-auto-tabpanel-${index}`}
-        aria-labelledby={`scrollable-auto-tab-${index}`}
-        {...other}
+        hidden={tabValue !== tabIndex}
+        id={`scrollable-force-tabpanel-${tabIndex}`}
+        aria-labelledby={`scrollable-force-tab-${tabIndex}`}
       >
-        {value === index && (
-            <>
-                {children}
-            </>
+        {tabValue === tabIndex && (
+          <>
+            {children}
+          </>
         )}
       </div>
     );
   }
   
   TabPanel.propTypes = {
+    tabIndex: PropTypes.number.isRequired,
+    tabValue: PropTypes.number.isRequired,
     children: PropTypes.node.isRequired,
-    index: PropTypes.any.isRequired,
-    value: PropTypes.any.isRequired,
+    forceRender: PropTypes.any,
   };
 
   export default TabPanel;

@@ -1,7 +1,7 @@
 module.exports = {
-  name: 'User Management',
-  desc: 'User Management System',
+  name: 'Leave Management',
+  desc: 'Leave Management System',
   prefix: 'enlite',
-  footerText: 'User Management All Rights Reserved 2020',
-  logoText: 'User Management',
+  footerText: 'Leave Management All Rights Reserved 2020',
+  logoText: 'Leave Management',
 };

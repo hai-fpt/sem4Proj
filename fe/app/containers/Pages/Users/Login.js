@@ -12,6 +12,9 @@ import ArrowBack from '@material-ui/icons/ArrowBack';
 import styles from 'enl-components/Forms/user-jss';
 import { FormattedMessage } from 'react-intl';
 import messages from './messages';
+import { loginWithEmail } from '../../../redux/actions/authActions';
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
 
 function Login(props) {
   const { classes } = props;
@@ -20,11 +23,11 @@ function Login(props) {
   const [valueForm, setValueForm] = useState(null);
 
   const submitForm = (values) => setValueForm(values);
-
   useEffect(() => {
     if (valueForm) {
       console.log(`You submitted:\n\n${valueForm.email}`);
-      window.location.href = '/app';
+      props.handleLoginWithEmail(valueForm.email, valueForm.password)
+      // window.location.href = '/app';
     }
   }, [valueForm]);
 
@@ -80,4 +83,18 @@ Login.propTypes = {
   classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(Login);
+const mapStateToProps = state => ({
+  state: state.authReducer
+});
+
+const mapDispatchToProps = dispatch => ({
+  handleLoginWithEmail: bindActionCreators(loginWithEmail, dispatch)
+});
+
+const LoginMapped = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Login);
+    
+
+export default withStyles(styles)(LoginMapped);

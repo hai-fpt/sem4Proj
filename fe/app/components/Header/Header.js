@@ -6,27 +6,23 @@ import Typography from '@material-ui/core/Typography';
 import Hidden from '@material-ui/core/Hidden';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
-import SearchIcon from '@material-ui/icons/Search';
 import FullscreenOutlined from '@material-ui/icons/FullscreenOutlined';
 import FullscreenExitOutlined from '@material-ui/icons/FullscreenExitOutlined';
 import InvertColors from '@material-ui/icons/InvertColorsOutlined';
-import HelpOutlineOutlined from '@material-ui/icons/HelpOutlineOutlined';
 import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
-import AccountCircle from '@material-ui/icons/AccountCircle';
+import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 import MenuIcon from '@material-ui/icons/Menu';
 import Button from '@material-ui/core/Button';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import brand from 'enl-api/dummy/brand';
 import logo from 'enl-images/logo.svg';
 import { injectIntl, FormattedMessage } from 'react-intl';
 import menuMessages from 'enl-api/ui/menuMessages';
-import link from 'enl-api/ui/link';
-import UserMenu from './UserMenu';
-import SearchUi from '../Search/SearchUi';
 import SelectLanguage from '../SelectLanguage';
 import messages from './messages';
 import styles from './header-jss';
+import { WarningDialog, CustomNotification } from 'enl-components';
 
 const elem = document.documentElement;
 
@@ -38,19 +34,16 @@ function Header(props) {
     margin,
     mode,
     title,
-    openGuide,
     history,
-    signOut,
     dense,
-    isLogin,
-    avatar,
     intl
   } = props;
   const [open] = useState(false);
   const [fullScreen, setFullScreen] = useState(false);
   const [turnDarker, setTurnDarker] = useState(false);
   const [showTitle, setShowTitle] = useState(false);
-
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [openNotification, setOpenNotification] = useState(false);
   // Initial header style
   let flagDarker = false;
   let flagTitle = false;
@@ -107,6 +100,24 @@ function Header(props) {
     }
   };
 
+  const handleSignOut = () => {
+    setDialogOpen(true)
+  }
+
+  const handleSignOutCancel = () => {
+    setDialogOpen(false)
+  }
+
+  const handleSignOutConfirm = async () => {
+    setDialogOpen(false)
+    localStorage.removeItem('userDetail');
+    localStorage.removeItem('jwtToken');
+    setOpenNotification(true)
+    setTimeout(() => {
+      history.push('/');
+    }, 2000);
+  };
+
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
     return () => {
@@ -125,7 +136,7 @@ function Header(props) {
     >
       <Toolbar disableGutters={!open}>
         <div className={classNames(classes.brandWrap, dense && classes.dense)}>
-          {/* <span>
+          <span>
             <IconButton
               className={classes.menuButton}
               aria-label="Menu"
@@ -133,7 +144,7 @@ function Header(props) {
             >
               <MenuIcon />
             </IconButton>
-          </span> */}
+          </span>
           <Hidden smDown>
             <NavLink to="/app" className={classNames(classes.brand, classes.brandBar)}>
               <img src={logo} alt={brand.name} />
@@ -176,11 +187,6 @@ function Header(props) {
                   <InvertColors />
                 </IconButton>
               </Tooltip>
-              <Tooltip title={intl.formatMessage(messages.guide)} placement="bottom">
-                <IconButton className={classes.button} onClick={openGuide}>
-                  <HelpOutlineOutlined />
-                </IconButton>
-              </Tooltip>
             </div>
             <Typography
               component="h2"
@@ -193,36 +199,41 @@ function Header(props) {
             </Typography>
           </div>
         </Hidden>
-        <div className={classes.searchWrapper}>
+        {/* <div className={classes.searchWrapper}>
           <div className={classes.wrapper}>
             <div className={classes.search}>
               <SearchIcon />
             </div>
             <SearchUi history={history} />
           </div>
-        </div>
+        </div> */}
         <Hidden xsDown>
           <span className={classes.separatorV} />
         </Hidden>
         <div className={classes.userToolbar}>
           <SelectLanguage />
-          {isLogin
-            ? <UserMenu signOut={signOut} avatar={avatar} />
-            : (
-              <Button
-                color="primary"
-                className={classes.buttonTop}
-                component={Link}
-                to={link.login}
-                variant="contained"
+          <Button
+              color="primary"
+              className={classes.buttonTop}
+              variant="contained"
+              onClick={handleSignOut}
               >
-                <AccountCircle />
-                <FormattedMessage {...messages.login} />
-              </Button>
-            )
-          }
+              <ExitToAppIcon />
+            <Typography component={'strong'}>SIGN OUT</Typography>
+          </Button>
         </div>
       </Toolbar>
+      <WarningDialog open={dialogOpen}
+      dialogMessage={'Are you sure signing out?'}
+      onClose={handleSignOutCancel}
+      onConfirm={handleSignOutConfirm}
+      />
+      <CustomNotification
+        open={openNotification}
+        close={() => {setOpenNotification(false)}}
+        notificationMessage={'Successfully sign out !'}
+        severity={'success'}
+      />
     </AppBar>
   );
 }

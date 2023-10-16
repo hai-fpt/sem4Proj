@@ -55,6 +55,10 @@ const styles = theme => ({
     ...wrapper(theme),
     height: '100%',
     borderRadius: 0,
+    justifyContent: 'center',
+    display:'flex',
+    alignItems: 'center',
+    flexDirection:'column'
   },
   fullWrap: {
     ...wrapper(theme),
@@ -70,13 +74,11 @@ const styles = theme => ({
   icon: {},
   topBar: {
     display: 'flex',
-    marginBottom: theme.spacing(2),
-    paddingBottom: theme.spacing(1),
-    maxWidth: 480,
+    paddingBottom: theme.spacing(3),
     marginLeft: 'auto',
     marginRight: 'auto',
-    borderBottom: `1px solid ${theme.palette.divider}`,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    width: '100%',
     '& $icon': {
       margin: `0 ${theme.spacing(1)}px`
     },
@@ -168,12 +170,13 @@ const styles = theme => ({
     }
   },
   socmedSideLogin: {
-    padding: '24px 24px',
+    padding: '124px 24px',
     margin: '0 auto',
     background: alpha(theme.palette.text.disabled, 0.05),
     borderRadius: 40,
     display: 'flex',
     justifyContent: 'center',
+    width: '100%',
     '& button': {
       padding: '4px 16px',
       margin: `0 ${theme.spacing(1)}px`,

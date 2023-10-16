@@ -46,7 +46,7 @@ public class User {
     private String department;
 
 
-    private boolean status;
+    private Boolean status;
 
     @JsonFormat(pattern = JSON_VIEW_DATE_FORMAT)
     private LocalDateTime resignedDate;

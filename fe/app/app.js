@@ -6,50 +6,56 @@
  */
 
 // Needed for redux-saga es6 generator support
-import 'core-js/stable';
-import 'regenerator-runtime/runtime';
+import "core-js/stable";
+import "regenerator-runtime/runtime";
 
 // Import all the third party stuff
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { Provider } from 'react-redux';
-import { PersistGate } from 'redux-persist/integration/react';
-import { ConnectedRouter } from 'connected-react-router';
-import history from 'utils/history';
-import 'sanitize.css/sanitize.css';
+import React from "react";
+import ReactDOM from "react-dom";
+import { Provider } from "react-redux";
+import { PersistGate } from "redux-persist/integration/react";
+import { ConnectedRouter } from "connected-react-router";
+import history from "utils/history";
+import "sanitize.css/sanitize.css";
 // Import root app
-import App from 'containers/App';
-import './styles/layout/base.scss';
+import App from "containers/App";
+import "./styles/layout/base.scss";
 
+// import LocalizationProvider from "@mui/lab/LocalizationProvider";
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 // Import Language Provider
-import LanguageProvider from 'containers/LanguageProvider';
+import LanguageProvider from "containers/LanguageProvider";
 
 // Load the favicon and the .htaccess file
 /* eslint-disable import/no-unresolved, import/extensions */
 /* eslint-enable import/no-unresolved, import/extensions */
 
-import configureStore from './redux/configureStore';
-
+import configureStore from "./redux/configureStore";
 // Import i18n messages
-import { translationMessages } from './i18n';
+import { translationMessages } from "./i18n";
+import axiosInterceptors from "./config/axiosInterceptors";
 
 // Create redux store with history
 const initialState = {};
 const { store, persistor } = configureStore(initialState, history);
-const MOUNT_NODE = document.getElementById('app');
+const MOUNT_NODE = document.getElementById("app");
 
-const render = messages => {
+axiosInterceptors();
+const render = (messages) => {
   ReactDOM.render(
-    <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
-        <LanguageProvider messages={messages}>
-          <ConnectedRouter history={history}>
-            <App history={history} />
-          </ConnectedRouter>
-        </LanguageProvider>
-      </PersistGate>
-    </Provider>,
-    MOUNT_NODE,
+      <Provider store={store}>
+        <PersistGate loading={null} persistor={persistor}>
+          <LanguageProvider messages={messages}>
+            <ConnectedRouter history={history}>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <App history={history} />
+              </LocalizationProvider>
+            </ConnectedRouter>
+          </LanguageProvider>
+        </PersistGate>
+      </Provider>,
+    MOUNT_NODE
   );
 };
 
@@ -57,7 +63,7 @@ if (module.hot) {
   // Hot reloadable React components and translation json files
   // modules.hot.accept does not accept dynamic dependencies,
   // have to be constants at compile-time
-  module.hot.accept(['./i18n', 'containers/App'], () => {
+  module.hot.accept(["./i18n", "containers/App"], () => {
     ReactDOM.unmountComponentAtNode(MOUNT_NODE);
     render(translationMessages);
   });
@@ -66,15 +72,17 @@ if (module.hot) {
 // Chunked polyfill for browsers without Intl support
 
 if (!window.Intl) {
-  new Promise(resolve => {
-    resolve(import('intl'));
+  new Promise((resolve) => {
+    resolve(import("intl"));
   })
-    .then(() => Promise.all([
-      import('intl/locale-data/jsonp/en.js'),
-      import('intl/locale-data/jsonp/de.js'),
-    ]))
+    .then(() =>
+      Promise.all([
+        import("intl/locale-data/jsonp/en.js"),
+        import("intl/locale-data/jsonp/de.js"),
+      ])
+    )
     .then(() => render(translationMessages))
-    .catch(err => {
+    .catch((err) => {
       throw err;
     });
 } else {

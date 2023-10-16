@@ -1,16 +1,24 @@
 package com.lms.controller;
 
 import com.lms.dto.LeaveCommentInfo;
+import com.lms.dto.projection.LeaveCommentProjection;
 import com.lms.exception.NotFoundByIdException;
 import com.lms.models.LeaveComment;
 import com.lms.service.LeaveCommentService;
 import com.lms.service.UserLeaveService;
 import com.lms.utils.ControllerUtils;
+import com.lms.utils.ProjectionMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 import static com.lms.utils.Constants.*;
 
@@ -26,6 +34,19 @@ public class LeaveCommentController {
 
 	@Autowired
 	LeaveCommentService commentService;
+
+
+	@GetMapping()
+	public ResponseEntity<List<LeaveCommentProjection>> getCommentById(@RequestParam Long id) throws NotFoundByIdException {
+		List<LeaveComment> comments = commentService.getAllCommentByLeaveId(id);
+		List<LeaveCommentProjection> projections = new ArrayList<>();
+		for (LeaveComment comment : comments) {
+			LeaveCommentProjection projection = ProjectionMapper.mapToLeaveCommentProjection(comment);
+			projections.add(projection);
+		}
+		projections.sort(Comparator.comparing(LeaveCommentProjection::getCreatedDate));
+		return ResponseEntity.ok(projections);
+	}
 
 	@PostMapping()
 	public ResponseEntity<LeaveCommentInfo> addComment(@RequestBody LeaveCommentInfo comment) throws NotFoundByIdException {

@@ -18,6 +18,7 @@ public class LeaveProcess extends BaseEmail {
 	private Integer approvalId;
 
 	private	ApprovalStatus status;
+	private String rejectedReason;
 
 	private List<User> processBys = new ArrayList<>();
 

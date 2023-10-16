@@ -1,15 +1,15 @@
 package com.lms.controller;
 
-import com.lms.dto.ApprovalStatus;
-import com.lms.dto.DateRange;
-import com.lms.dto.UserLeaveCancel;
-import com.lms.dto.UserLeave;
+import com.lms.dto.*;
+import com.lms.dto.projection.LeaveManagerProjection;
 import com.lms.dto.projection.UserLeaveProjection;
+import com.lms.dto.projection.UserProjection;
 import com.lms.exception.NotFoundByIdException;
 import com.lms.models.Leave;
 import com.lms.models.User;
 import com.lms.service.*;
 import com.lms.utils.ControllerUtils;
+import com.lms.utils.ProjectionMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.security.RolesAllowed;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static com.lms.utils.Constants.*;
@@ -85,7 +86,7 @@ public class UserLeaveController {
     }
 
     @GetMapping("/user_leave/role")
-    @RolesAllowed({"ADMIN","MANAGER"})
+    @RolesAllowed({"ADMIN", "MANAGER"})
     public ResponseEntity<Page<UserLeaveProjection>> getUserLeaveByRole(@RequestParam Long id, @PageableDefault(size = 10) Pageable pageable) {
         if (!controllerUtils.validateRequestedUser(id)) {
             throw new NullPointerException(USER_NOT_EXISTS);
@@ -97,7 +98,7 @@ public class UserLeaveController {
     }
 
     @GetMapping("/user_leave/user")
-    @RolesAllowed({"ADMIN","MANAGER"})
+    @RolesAllowed({"ADMIN", "MANAGER"})
     public ResponseEntity<Page<UserLeaveProjection>> getUserLeaveByUser(@RequestParam Long id, @PageableDefault(size = 10) Pageable pageable) {
         if (!controllerUtils.validateRequestedUser(id)) {
             throw new NullPointerException(USER_NOT_EXISTS);
@@ -109,7 +110,7 @@ public class UserLeaveController {
     }
 
     @GetMapping("/user_leave/from")
-    @RolesAllowed({"ADMIN","MANAGER"})
+    @RolesAllowed({"ADMIN", "MANAGER"})
     public ResponseEntity<Page<UserLeaveProjection>> getUserLeaveByFromDate(@RequestParam @DateTimeFormat(pattern = JSON_VIEW_DATE_FORMAT) LocalDateTime fromDateStr, @PageableDefault(size = 10) Pageable pageable) {
         DateRange dateRange = new DateRange();
         dateRange.setStartDate(fromDateStr);
@@ -119,7 +120,7 @@ public class UserLeaveController {
     }
 
     @GetMapping("/user_leave/date")
-    @RolesAllowed({"ADMIN","MANAGER"})
+    @RolesAllowed({"ADMIN", "MANAGER"})
     public ResponseEntity<Page<UserLeaveProjection>> getUserLeaveByDateRange(@RequestParam @DateTimeFormat(pattern = JSON_VIEW_DATE_FORMAT) LocalDateTime today, @PageableDefault(size = 10) Pageable pageable) {
         DateRange dateRange = new DateRange();
         dateRange.setSingleDate(today);
@@ -128,4 +129,28 @@ public class UserLeaveController {
         return ResponseEntity.ok(userLeaves);
     }
 
+    @GetMapping("/user_leave/self")
+    public ResponseEntity<List<SelfLeave>> getSelfLeave(@RequestParam Long id) {
+        if (!controllerUtils.validateRequestedUser(id)) {
+            throw new NullPointerException(USER_NOT_EXISTS);
+        }
+        List<SelfLeave> selfLeaves = userLeaveService.getSelfLeave(id);
+        return ResponseEntity.ok(selfLeaves);
+    }
+
+    @GetMapping("/user_leave")
+    public ResponseEntity<UserLeaveProjection> getUserLeaveById(@RequestParam Long id) {
+        Optional<com.lms.models.UserLeave> userLeave = userLeaveService.getUserLeaveById(id);
+        if (userLeave.isEmpty()) {
+            throw new NullPointerException(LEAVE_REQUEST_NOT_EXISTS);
+        }
+        UserLeaveProjection projection = ProjectionMapper.mapToUserLeaveProjection(userLeave.get());
+        return ResponseEntity.ok(projection);
+    }
+
+    @GetMapping("/user_leave/managers")
+    public ResponseEntity<List<LeaveManagerProjection>> getUserLeaveManagers(@RequestParam Long id) {
+        List<LeaveManagerProjection> projections = userLeaveService.getUserLeaveManagers(id);
+        return ResponseEntity.ok(projections);
+    }
 }

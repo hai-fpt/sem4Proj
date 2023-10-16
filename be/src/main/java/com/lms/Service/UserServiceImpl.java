@@ -4,7 +4,6 @@ import com.lms.dto.*;
 import com.lms.dto.Role;
 import com.lms.dto.User;
 import com.lms.dto.projection.UserProjection;
-import com.lms.exception.DuplicateException;
 import com.lms.exception.NotFoundByIdException;
 import com.lms.exception.UnauthorizedException;
 import com.lms.helper.ExcelHelper;
@@ -15,9 +14,9 @@ import com.lms.utils.ProjectionMapper;
 import org.hibernate.HibernateError;
 import org.hibernate.HibernateException;
 import org.modelmapper.ModelMapper;
-import org.modelmapper.PropertyMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,6 +24,9 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.transaction.Transactional;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -38,20 +40,29 @@ public class UserServiceImpl implements UserService {
     private final UserTeamRepository userTeamRepository;
     private final RoleRepository roleRepository;
     private final UserRoleRepository userRoleRepository;
+    private final AvatarRepository avatarRepository;
+    private final Path root = Paths.get("avatar");
 
     @Autowired
-    public UserServiceImpl(ExcelHelper excelHelper, UserRepository userRepository, TeamRepository teamRepository, UserTeamRepository userTeamRepository, RoleRepository roleRepository, UserRoleRepository userRoleRepository) {
+    public UserServiceImpl(ExcelHelper excelHelper, UserRepository userRepository, TeamRepository teamRepository, UserTeamRepository userTeamRepository, RoleRepository roleRepository, UserRoleRepository userRoleRepository, AvatarRepository avatarRepository) {
         this.excelHelper = excelHelper;
         this.userRepository = userRepository;
         this.teamRepository = teamRepository;
         this.userTeamRepository = userTeamRepository;
         this.roleRepository = roleRepository;
         this.userRoleRepository = userRoleRepository;
+        this.avatarRepository = avatarRepository;
     }
 
     @Override
-    public Page<UserProjection> getAllUsers(Pageable pageable) {
-        return userRepository.findAllProjectedBy(pageable);
+    public List<UserProjection> getAllUsers(Pageable pageable) {
+        List<com.lms.models.User> users = userRepository.findAll();
+        List<UserProjection> projections = new ArrayList<>();
+        for (com.lms.models.User user : users) {
+            UserProjection projection = ProjectionMapper.mapToUserProjection(user);
+            projections.add(projection);
+        }
+        return projections;
     }
 
     @Override
@@ -73,6 +84,29 @@ public class UserServiceImpl implements UserService {
 
         Optional<com.lms.models.Role> roleExists = roleRepository.findById(3L);
         com.lms.models.User userSaved = userRepository.save(userEntity);
+
+        int randomNum = new Random().nextInt(16) + 1;
+        String avatarFileName = randomNum + ".png";
+        String avatarPath = "avatar/" + userSaved.getId();
+        userSaved.setAvatar(new Avatar(avatarFileName, avatarPath, userSaved, userSaved.getEmail()));
+        String userFolderPath = this.root + "/" + userSaved.getId();
+        Path userPath = Paths.get(userFolderPath);
+        if (!Files.exists(userPath) && !Files.isDirectory(userPath)) {
+            try {
+                Files.createDirectories(userPath);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create user avatar folder");
+            }
+        }
+        Path defaultAvatar = Paths.get(this.root + "/default/" + avatarFileName);
+        Path userAvatarPath = Paths.get(userFolderPath + "/" + avatarFileName);
+        try {
+            Files.copy(defaultAvatar, userAvatarPath);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to copy the default avatar");
+        }
+        userRepository.save(userSaved);
+
         UserProjection projection = ProjectionMapper.mapToUserProjection(userSaved);
         List<UserRole> userRoles = new ArrayList<>();
         if (roleExists.isPresent()) {
@@ -81,9 +115,9 @@ public class UserServiceImpl implements UserService {
             userRoles.add(userRole);
         }
         userRoleRepository.saveAll(userRoles);
-        List<Long> teamIds = user.getTeams().stream().map(com.lms.dto.Team::getId).collect(Collectors.toList());
-
-        List<Team> teams = teamRepository.findAllById(teamIds);
+        List<String> teamNames = user.getTeams().stream()
+                .map(com.lms.dto.Team::getTeamName).collect(Collectors.toList());
+        List<Team> teams = teamRepository.findAllByTeamNameIn(teamNames);
         List<UserTeam> userTeams = new ArrayList<>();
 
         for (Team team : teams) {
@@ -125,7 +159,14 @@ public class UserServiceImpl implements UserService {
             if (Objects.equals(role, com.lms.models.Role.RoleEnum.ADMIN)) {
                 return userRepository.findAllProjectedBy(pageable);
             } else if (Objects.equals(role, com.lms.models.Role.RoleEnum.MANAGER)) {
-                return userRepository.getUserByTeam(user.getId(), pageable);
+                List<com.lms.models.User> users = userRepository.getUserByTeam(user.getId());
+                List<UserProjection> projections = new ArrayList<>();
+                for (com.lms.models.User user1 : users) {
+                    UserProjection projection = ProjectionMapper.mapToUserProjection(user1);
+                    projections.add(projection);
+                }
+                return new PageImpl<>(projections, pageable, projections.size());
+
             } else {
                 throw new UnauthorizedException("User is not authorized");
             }
@@ -134,6 +175,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserProjection updateUser(User user) {
         com.lms.models.User userEntity = userRepository.findById(user.getId()).get();
         userEntity.setName(user.getName());
@@ -147,30 +189,33 @@ public class UserServiceImpl implements UserService {
         userEntity.setRank(user.getRank());
         userEntity.setJoinedDate(user.getJoinedDate());
         userEntity.setDepartment(user.getDepartment());
-        userEntity.setStatus(user.isStatus());
+        userEntity.setStatus(user.getStatus());
         userEntity.setResignedDate(user.getResignedDate());
-        userEntity.setStatus(user.isStatus());
         userEntity.setUpdatedBy(user.getUpdatedBy());
         userEntity.setUpdatedDate(LocalDateTime.now());
+
+//        userTeamRepository.deleteByUser_Id(userEntity.getId());
+        deleteUserTeamByUserId(userEntity.getId());
+
+        List<String> teamNames = user.getTeams().stream()
+                .map(com.lms.dto.Team::getTeamName).collect(Collectors.toList());
+        List<Team> teams = teamRepository.findAllByTeamNameIn(teamNames);
+
 
         List<UserTeam> userTeams = new ArrayList<>();
         List<UserRole> userRoles = new ArrayList<>();
 
-        for (com.lms.dto.Team team : user.getTeams()) {
-            for (UserTeam existTeam : userEntity.getUserTeams()) {
-                if (Objects.equals(team.getId(), existTeam.getTeam().getId())) {
-                    continue;
-                }
-                Team teamEntity = teamRepository.findById(team.getId()).get();
-                UserTeam userTeam = new UserTeam(userEntity, teamEntity);
-                userTeams.add(userTeam);
-            }
+        for (Team team : teams) {
+            UserTeam userTeam = new UserTeam(userEntity, team);
+            userTeams.add(userTeam);
         }
+
         try {
             userTeamRepository.saveAll(userTeams);
         } catch (HibernateError ex) {
             throw new HibernateException("User and team pair already exists");
         }
+
         Set<com.lms.models.Role.RoleEnum> newRoleNames = new HashSet<>(user.getUserRoles().stream()
                 .map(role -> role.getRole().getName())
                 .collect(Collectors.toList()));
@@ -199,6 +244,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void deleteUserTeamByUserId(Long id) {
+        userTeamRepository.deleteByUser_Id(id);
+    }
+
+    @Override
     public UserProjection changeStatus(Long id, ChangeUserStatus statusDTO) {
         com.lms.models.User user = userRepository.findById(id).get();
         user.setStatus(statusDTO.isStatus());
@@ -209,7 +259,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void deleteUser(Long id) {
+        userTeamRepository.deleteByUser_Id(id);
+        userRoleRepository.deleteByUser_Id(id);
         userRepository.deleteById(id);
     }
 
@@ -260,8 +313,15 @@ public class UserServiceImpl implements UserService {
         }
     }
 
+    @Override
     public Page<UserProjection> searchUser(String keyword, Pageable pageable) {
-        return userRepository.searchUser(keyword, pageable);
+        List<com.lms.models.User> userProjections = userRepository.searchUser(keyword.toLowerCase());
+        List<UserProjection> projections = new ArrayList<>();
+        for (com.lms.models.User user : userProjections) {
+            UserProjection projection = ProjectionMapper.mapToUserProjection(user);
+            projections.add(projection);
+        }
+        return new PageImpl<>(projections, pageable, projections.size());
     }
 
     @Override

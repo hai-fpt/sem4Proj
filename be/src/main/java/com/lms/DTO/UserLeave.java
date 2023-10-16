@@ -1,6 +1,8 @@
 package com.lms.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.lms.dto.Leave;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -27,6 +29,7 @@ public class UserLeave {
 	private LocalDateTime toDate;
 	private ApprovalStatus status;
 	private String reason;
+	private String rejectedReason;
 	private String updatedBy;
 	private List<Long> informTo;
 	private List<Long> teamLeads;

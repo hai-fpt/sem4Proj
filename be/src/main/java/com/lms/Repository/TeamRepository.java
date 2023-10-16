@@ -16,7 +16,7 @@ import java.util.List;
 public interface TeamRepository extends JpaRepository<Team, Long> {
     Page<TeamProjection> findAllProjectedBy(Pageable pageable);
     TeamProjection findTeamProjectionByTeamName(String teamName);
-
     @Query("select u from User u join u.userTeams ut where ut.team.id = :id")
     Page<UserProjection> findUsersByTeam(@Param("id") Long id, Pageable pageable);
+    List<Team> findAllByTeamNameIn(List<String> teamNames);
 }

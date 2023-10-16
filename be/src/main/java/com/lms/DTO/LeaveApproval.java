@@ -13,6 +13,7 @@ public class LeaveApproval {
     private Long id;
     private Long managerId;
     private ApprovalStatus status;
+    private String description;
     private String updatedBy;
 
 }

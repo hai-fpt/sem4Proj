@@ -1,6 +1,7 @@
 package com.lms.repository;
 
 import com.lms.dto.ApprovalStatus;
+import com.lms.dto.projection.LeaveManagerProjection;
 import com.lms.dto.projection.UserLeaveProjection;
 import com.lms.models.User;
 import com.lms.models.UserLeave;
@@ -47,4 +48,7 @@ public interface UserLeaveRepository extends JpaRepository<UserLeave, Long> {
     List<UserLeaveProjection> findUserLeaveBetweenDatesByUserId(@Param("id") Long id, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     List<UserLeaveProjection> findUserLeaveByUserIdAndStatusAndAndLeave_AffectsDaysOff(Long id, ApprovalStatus status, boolean affect);
+
+    @Query("select la.managerId.id as id, la.managerId.name as name, la.status as status from LeaveApproval la where la.userLeave.id = :id")
+    List<LeaveManagerProjection> findManagerById(@Param("id") Long id);
 }

@@ -1,0 +1,1 @@
+export const SET_API_DATA_MANAGER = "SET_API_DATA_MANAGER";

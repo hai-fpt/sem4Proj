@@ -46,11 +46,10 @@ public class UserController {
     }
 
     @GetMapping("/user")
-//    @RolesAllowed(value = "ADMIN")
     public ResponseEntity<Page<UserProjection>> getAllUsers(@PageableDefault(page = 0, size = 10) Pageable pageable) {
         Pageable sorted = controllerUtils.sortPage(pageable, "updatedDate");
-        Page<UserProjection> projections = userServiceImpl.getAllUsers(sorted);
-        return ResponseEntity.ok(projections);
+        List<UserProjection> projections = userServiceImpl.getAllUsers(sorted);
+        return ResponseEntity.ok(new PageImpl<>(projections, sorted, projections.size()));
     }
 
     @GetMapping("/user/{id}")

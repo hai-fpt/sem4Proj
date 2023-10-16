@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { PropTypes } from 'prop-types';
-import { Switch, Route } from 'react-router-dom';
+import { Switch, Route, Redirect } from 'react-router-dom';
 import Dashboard from '../Templates/Dashboard';
 import { AppContext } from './ThemeWrapper';
 import {
@@ -10,8 +10,16 @@ import {
   NotFound,
   Form,
   Table,
-  Parent,
   Holiday,
+  UserProfile,
+  Team,
+  Roles,
+  LeaveType,
+  Users,
+  ApplyLeave,
+  MyLeave,
+  LeaveManagement,
+  Department,
 } from "../pageListAsync";
 
 function Application(props) {
@@ -22,24 +30,25 @@ function Application(props) {
     <Dashboard history={history} changeMode={changeMode}>
       <Switch>
         {/* Home */}
-        <Route exact path="/app" component={BlankPage} />
-        <Route path="/app/pages/dashboard" component={DashboardPage} />
-        <Route path="/app/pages/form" component={Form} />
-        <Route path="/app/pages/table" component={Table} />
-        <Route path="/app/pages/page-list" component={Parent} />
+        <Redirect exact path="/app" to="/app/pages/my leave" component={BlankPage} />
         <Route path="/app/pages/pages/not-found" component={NotFound} />
         <Route path="/app/pages/pages/error" component={Error} />
 
         {/* New Design */}
-        <Route path="/app/pages/home" component={DashboardPage} />
-        <Route path="/app/pages/user" component={Table} />
+        <Route path="/app/pages/users" component={Users} />
+        <Route path="/app/pages/user/profile" component={UserProfile} />
         <Route path="/app/pages/add/user" component={Form} />
         <Route path="/app/pages/import/user" component={DashboardPage} />
-        <Route path="/app/pages/leave/manage" component={Table} />
-        <Route path="/app/pages/leave/apply" component={DashboardPage} />
+        <Route path="/app/pages/leave/manage" component={LeaveManagement} />
+        <Route path="/app/pages/leave/apply" component={ApplyLeave} />
 
-        {/* Holiday management */}
+        {/* System information */}
         <Route path="/app/pages/holidays" component={Holiday}/>
+        <Route path="/app/pages/team" component={Team}/>
+        <Route path="/app/pages/roles" component={Roles}/>
+        <Route path="/app/pages/leave type" component={LeaveType}/>
+        <Route path="/app/pages/my leave" component={MyLeave}/>
+        <Route path="/app/pages/department" component={Department}/>
 
         <Route component={NotFound} />
       </Switch>
