@@ -1,11 +1,16 @@
 import { fetchUsers, postUser, putUser, deleteUser, changeStatus } from "enl-api/user/userApi"
+import messages from "enl-api/user/manageUserMessages";
+import {useIntl} from "react-intl";
+import {fetchUsersRole} from "../../../../api/user/userApi";
+
 
 const UsersService = {
     getTabItems: (detailFormData) => {
+        const intl = useIntl();
         return [
-          { label: 'List', index: 0 },
-          { label: detailFormData ? 'Update' : 'Create', index: 1 },
-          { label: 'Import data', index: 2 }
+          { label: intl.formatMessage(messages.list), index: 0 },
+          { label: detailFormData ? intl.formatMessage(messages.update) : intl.formatMessage(messages.create) , index: 1 },
+          // { label: 'Import data', index: 2 }
         ];
     },
 
@@ -25,7 +30,7 @@ const UsersService = {
                 field: 'dateOfBirth'
             },
             email: {
-                disabled: false,
+                disabled: true,
                 type: 'text',
                 label: 'email',
                 field: 'email',
@@ -124,12 +129,18 @@ const UsersService = {
                 label: 'Updated date',
                 field: 'updatedDate'
             },
+            userRole: {
+                disabled: false,
+                type: "multi_select_role",
+                label: "roles",
+                field: "userRoles"
+            }
         };
         return dataSetup;
     },
 
     handleCancelEdit: (e,setDetailFormData, setForceRender, setReloadKey, handleTabValueProps, detailFormData) => {
-        e.preventDefault(); 
+        e?.preventDefault();
         setDetailFormData();
         setForceRender(detailFormData);
         setReloadKey(prevCount => prevCount + 1);
@@ -143,11 +154,12 @@ const UsersService = {
         await setReloadKey(prevCount => prevCount + 1);
         await handleTabValueProps(0)
     },
-    handleEdit: async (e, baseApiUrl, formData, setOpenNotification, setReloadKey, handleTabValueProps) => {
+    handleEdit: async (e, baseApiUrl, formData, setOpenNotification, setReloadKey, UpdatedBy, handleTabValueProps) => {
         e.preventDefault();
         if (formData.userTeams) {
             delete formData.userTeams;
         }
+        formData.updatedBy = UpdatedBy;
         await putUser(baseApiUrl, formData);
         await setOpenNotification(true);
         await setReloadKey(prevCount => prevCount + 1);
@@ -163,9 +175,9 @@ const UsersService = {
         setFormData(item);
     },
 
-    fetchUser: async (apiUrl, page, size) => {
+    fetchUser: async (apiUrl, userId, page, size) => {
         try {
-            return await fetchUsers(apiUrl, page, size)
+            return await fetchUsersRole(apiUrl, userId, page, size)
         } catch (error) {
             throw Error(error)
         }
