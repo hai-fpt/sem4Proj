@@ -12,6 +12,9 @@ import ArrowBack from '@material-ui/icons/ArrowBack';
 import styles from 'enl-components/Forms/user-jss';
 import { FormattedMessage } from 'react-intl';
 import messages from './messages';
+import { loginWithEmail } from '../../../redux/actions/authActions';
+import { bindActionCreators } from 'redux';
+import { connect } from 'react-redux';
 
 function Login(props) {
   const { classes } = props;
@@ -20,11 +23,11 @@ function Login(props) {
   const [valueForm, setValueForm] = useState(null);
 
   const submitForm = (values) => setValueForm(values);
-
   useEffect(() => {
     if (valueForm) {
       console.log(`You submitted:\n\n${valueForm.email}`);
-      window.location.href = '/app';
+      props.handleLoginWithEmail(valueForm.email, valueForm.password)
+      // window.location.href = '/app';
     }
   }, [valueForm]);
 
@@ -45,23 +48,19 @@ function Login(props) {
               <div className={classes.openingHead}>
                 <NavLink to="/" className={classes.brand}>
                   <img src={logo} alt={brand.name} />
-                  {brand.name}
+                  <FormattedMessage {...messages.brandName}/>
                 </NavLink>
               </div>
               <Typography variant="h3" component="h1" gutterBottom>
                 <FormattedMessage {...messages.welcomeTitle} />
                 &nbsp;
-                {brand.name}
+                <FormattedMessage {...messages.brandName}/>
               </Typography>
               <Typography variant="h6" component="p" className={classes.subpening}>
                 <FormattedMessage {...messages.welcomeSubtitle} />
               </Typography>
             </div>
             <div className={classes.openingFooter}>
-              <NavLink to="/" className={classes.back}>
-                <ArrowBack />
-                &nbsp;back to site
-              </NavLink>
               <div className={classes.lang}>
                 <SelectLanguage />
               </div>
@@ -80,4 +79,18 @@ Login.propTypes = {
   classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(Login);
+const mapStateToProps = state => ({
+  state: state.authReducer
+});
+
+const mapDispatchToProps = dispatch => ({
+  handleLoginWithEmail: bindActionCreators(loginWithEmail, dispatch)
+});
+
+const LoginMapped = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Login);
+    
+
+export default withStyles(styles)(LoginMapped);
