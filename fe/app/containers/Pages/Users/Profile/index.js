@@ -11,9 +11,11 @@ import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
 import { useSelector } from 'react-redux';
 import userProfileService from './ProfileService';
+import {injectIntl} from "react-intl";
+import messages from "enl-api/user/myProfileMessages";
 
-const userProfile = () => {
-  const dataSetup = userProfileService.dataSetupValue();
+const userProfile = ({intl}) => {
+  const dataSetup = userProfileService.dataSetupValue(intl);
   const baseApiUrl = useSelector((state) => state.env.BASE_API_URL);
   const detailData = useSelector((state) => state.detailProfile);
   const [formData, setFormData] = useState();
@@ -93,7 +95,7 @@ const userProfile = () => {
           title="Holidays"
           whiteBg
           icon="person"
-          desc="This module allows users to view and update thier profile."
+          desc={intl.formatMessage(messages.title)}
         ></PapperBlock>
         <Paper elevation={2}>
           <form onSubmit={handleFormSubmit}>
@@ -132,7 +134,7 @@ const userProfile = () => {
                 color="primary"
                 disabled={initialForm === formData ? true : false}
               >
-                Update
+                {intl.formatMessage(messages.button)}
               </Button>
             </Box>
           </form>
@@ -140,7 +142,7 @@ const userProfile = () => {
       </div>
 
       <WarningDialog open={dialogOpen}
-      dialogMessage={'Are you sure change your profile information?'}
+      dialogMessage={intl.formatMessage(messages.confirm)}
       onClose={handleCancel}
       onConfirm={handleConfirm}
       />
@@ -157,4 +159,4 @@ const userProfile = () => {
   );
 };
 
-export default userProfile;
+export default injectIntl(userProfile);
