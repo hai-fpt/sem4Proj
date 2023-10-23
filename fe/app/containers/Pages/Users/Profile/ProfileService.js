@@ -1,125 +1,128 @@
 import { fetchProfile, updateProfile } from 'enl-api/user/myProfile.js';
+import {injectIntl} from 'react-intl';
+import messages from "enl-api/user/myProfileMessages"
+
 
 const userProfileService = {
-    dataSetupValue: () => {
+    dataSetupValue: (intl) => {
         const dataSetup = {
             name: {
                 disabled: false,
                 type: 'text',
-                label: 'name',
+                label: intl.formatMessage(messages.name),
                 field: 'name',
                 require: true,
             },
             birthday: {
                 disabled: false,
                 type: 'date',
-                label: 'birthday',
+                label: intl.formatMessage(messages.dob),
                 field: 'dateOfBirth'
             },
             email: {
                 disabled: true,
                 type: 'text',
-                label: 'email',
+                label: intl.formatMessage(messages.email),
                 field: 'email',
                 require: true,
             },
             phone: {
                 disabled: false,
                 type: 'tel',
-                label: 'phone',
+                label: intl.formatMessage(messages.phone),
                 field: 'phone',
                 require: true,
             },
             university: {
                 disabled: false,
                 type: 'text',
-                label: 'University',
+                label: intl.formatMessage(messages.university),
                 field: 'university'
             },
             universityCode: {
                 disabled: false,
                 type: 'text',
-                label: 'University code',
+                label: intl.formatMessage(messages.universityCode),
                 field: 'universityCode'
-            }, 
+            },
             universityGraduateDate: {
                 disabled: false,
                 type: 'date',
-                label: 'Graduated date',
+                label: intl.formatMessage(messages.graduate),
                 field: 'universityGraduateDate'
             },
             experienceDate: {
                 disabled: true,
                 type: 'text',
-                label: 'exp',
+                label: intl.formatMessage(messages.exp),
                 field: 'experienceDate'
             },
             rank: {
                 disabled: true,
                 type: 'text',
-                label: 'rank',
+                label: intl.formatMessage(messages.rank),
                 field: 'rank'
             },
-            joinedDate:{
+            joinedDate: {
                 disabled: true,
                 type: 'text',
-                label: 'joined date',
+                label: intl.formatMessage(messages.joined),
                 field: 'joinedDate'
             },
             workingTime: {
                 disabled: true,
                 type: 'text',
-                label: 'duration of employment',
+                label: intl.formatMessage(messages.duration),
                 field: 'workingTime'
             },
             department: {
                 disabled: true,
                 type: 'text',
-                label: 'department',
+                label: intl.formatMessage(messages.department),
                 field: 'department'
             },
             userTeam: {
                 disabled: true,
                 type: 'text',
-                label: 'team',
+                label: intl.formatMessage(messages.team),
                 field: 'userTeams'
             },
             status: {
                 disabled: true,
                 type: 'text',
-                label: 'Active',
+                label: intl.formatMessage(messages.active),
                 field: 'status'
             },
             resignedDate: {
                 disabled: true,
                 type: 'text',
-                label: 'resigned date',
+                label: intl.formatMessage(messages.resign),
                 field: 'resignedDate'
             },
             createdDate: {
                 disabled: true,
                 type: 'text',
-                label: 'Created date',
+                label: intl.formatMessage(messages.created),
                 field: 'createdDate'
             },
             updatedBy: {
                 disabled: true,
                 type: 'text',
-                label: 'Updated by',
+                label: intl.formatMessage(messages.updatedBy),
                 field: 'updatedBy'
             },
             updatedDate: {
                 disabled: true,
                 type: 'text',
-                label: 'Updated date',
+                label: intl.formatMessage(messages.updated),
                 field: 'updatedDate'
             },
             skills: {
                 disabled: false,
                 type: 'textarea',
-                label: 'skills',
+                label: intl.formatMessage(messages.skill),
                 field: 'skills'
-            },
+            }
         };
         return dataSetup;
     },
@@ -131,12 +134,11 @@ const userProfileService = {
         }
     },
     updateProfile: async (id, data, baseApiUrl) => {
-        console.log(data);
-        // try {
-        //   return await updateProfile(id, data, baseApiUrl)
-        // } catch (error) {
-        //   throw new Error(error);
-        // }
+        try {
+          return await updateProfile(id, data, baseApiUrl)
+        } catch (error) {
+          throw new Error(error);
+        }
     }
 
 };
