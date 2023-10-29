@@ -47,5 +47,22 @@ export default defineMessages({
   login: {
     id: `${scope}.user.login`,
     defaultMessage: 'Log In',
+  },
+  logoutConfirm: {
+    id: `${scope}.user.logout.confirm`,
+    defaultMessage: 'Are you sure signing out?',
+  },
+  logoutSuccess: {
+    id: `${scope}.user.logout.success`,
+    defaultMessage: 'Successfully sign out !',
+  },
+  signOutButton: {
+    id: `${scope}.user.signout.button`,
+    defaultMessage: "SIGN OUT"
+  },
+  brandName: {
+    id: `${scope}.header.brandName`,
+    defaultMessage: "Leave Management"
   }
+
 });

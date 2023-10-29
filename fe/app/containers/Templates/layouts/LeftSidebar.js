@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React, {Fragment, useEffect, useState} from 'react';
 import { PropTypes } from 'prop-types';
 import classNames from 'classnames';
 import Fade from '@material-ui/core/Fade';
@@ -32,6 +32,25 @@ function LeftSidebarLayout(props) {
     userAttr,
     isLogin
   } = props;
+  const [placeFormat, setPlaceFormat] = useState('');
+  const transformPlace = (place) => {
+    switch (place) {
+      case "leave management":
+        return setPlaceFormat("leaveManagement");
+      case "my leave":
+        return setPlaceFormat("myLeave");
+      case "apply leave":
+        return setPlaceFormat("applyLeave");
+      case "leave type":
+        return setPlaceFormat("leaveType");
+      default:
+        return setPlaceFormat(place);
+    }
+  }
+
+  useEffect(() => {
+    transformPlace(place);
+  }, [place])
 
   return (
     <Fragment>
@@ -60,7 +79,7 @@ function LeftSidebarLayout(props) {
           {titleException.indexOf(history.location.pathname) < 0 && (
             <div className={classes.pageTitle}>
               <Typography component="h4" variant="h4">
-                {messages[place] !== undefined ? <FormattedMessage {...messages[place]} /> : place}
+                {messages[placeFormat] !== undefined ? <FormattedMessage {...messages[placeFormat]} /> : placeFormat}
               </Typography>
               <BreadCrumb separator=" / " theme="light" location={history.location} />
             </div>

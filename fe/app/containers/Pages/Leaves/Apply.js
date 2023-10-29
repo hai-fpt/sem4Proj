@@ -4,7 +4,8 @@ import PropTypes from "prop-types";
 import brand from "enl-api/dummy/brand";
 import Calendar from "../../../components/Calendar/Calendar";
 import ApplyLeaveService from "./ApplyLeaveService";
-import {useSelector} from "react-redux";
+import {useDispatch, useSelector} from "react-redux";
+import {fetchLeaves} from "../../../redux/actions/applyLeaveActions";
 
 
 
@@ -14,17 +15,17 @@ const ApplyLeave = () => {
     const userDetail = JSON.parse(localStorage.getItem("userDetail"));
     const baseApiUrl = useSelector((state) => state.env.BASE_API_URL);
     const [selfLeaves, setSelfLeaves] = useState([]);
-
+    const dispatch = useDispatch()
     const getSelfLeaves = async (id, baseApiUrl) => {
         const res = await ApplyLeaveService.getSelfLeave(id, baseApiUrl);
+        localStorage.setItem("leaves", JSON.stringify(res.data));
+        dispatch(fetchLeaves())
         setSelfLeaves(res.data)
     }
     useEffect(() => {
         getSelfLeaves(userDetail.id, baseApiUrl)
     }, []);
-    if (selfLeaves.length !== 0) {
-        localStorage.setItem("leaves", JSON.stringify(selfLeaves));
-    }
+
 
 
   return (

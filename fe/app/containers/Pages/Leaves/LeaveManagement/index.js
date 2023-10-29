@@ -14,35 +14,62 @@ import {
 import Paper from '@material-ui/core/Paper';
 import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
+import IconButton from '@material-ui/core/IconButton';
+import Tooltip from '@material-ui/core/Tooltip';
+import Typography from '@material-ui/core/Typography';
 import MUIDataTable from 'mui-datatables';
 import LeavesManagementService from './service';
+import {resetLeaveState} from 'enl-redux/actions/leaveManageActions'
 import {useSelector, useDispatch} from 'react-redux';
 import Popup from "react-popup";
 import EventInfoDialog from "../../../../components/Calendar/EventInfoDialog";
+import CircularProgress from "@material-ui/core/CircularProgress";
+import RejectReason from "./rejectReason";
+import {Done, Close} from '@material-ui/icons'
+import {fetchLeavesManagers} from "../../../../api/leaveManagement";
+import {injectIntl} from 'react-intl';
+import messages from "enl-api/leaveManagement/manageLeaveMessages";
 
-const LeaveManagement = () => {
+const LeaveManagement = ({intl}) => {
     const dispatch = useDispatch();
     const [reloadKey, setReloadKey] = useState(0);
     const [tabValue, setTabValue] = useState(0);
-    const [forceRender, setForceRender] = useState(false);
     const [openNotification, setOpenNotification] = useState(false);
     const [tableData, setTableData] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [rejectReason, setRejectReason] = useState("");
+    const [listManagers, setListManagers] = useState([]);
     const tabItems = LeavesManagementService.getTabItems();
     const baseApiUrl = useSelector((state) => state.env.BASE_API_URL);
-    const detailProfile = useSelector((state) => state.detailProfile)
+    const detailProfile = useSelector((state) => state.detailProfile);
+    const dayLeaves = useSelector((state) => state.manageLeaves);
 
     const handleTabValueProps = (propsFromChild) => {
         setTabValue(propsFromChild)
     };
 
-    const requestDecision = (decision, requestId) => {
+    const rejectDecision = (decision, requestId) => {
+        let eventInfo = {
+            id: requestId,
+            decision: decision
+        }
+        Popup.create({
+            title: intl.formatMessage(messages.rejectReason),
+            content: <RejectReason eventInfo={eventInfo} requestDecision={requestDecision}/>
+        })
+    }
+
+    const requestDecision = (decision, requestId, rejectReason) => {
+        setIsLoading(true);
         LeavesManagementService.handleDecision(baseApiUrl,
             decision,
             requestId,
             detailProfile.id,
+            rejectReason,
             detailProfile.email,
             setReloadKey,
         ).then(() => {
+            setIsLoading(false)
             Popup.close()
         })
 
@@ -60,21 +87,34 @@ const LeaveManagement = () => {
         }
     };
 
+    const fetchLeavesManagers = async (id) => {
+        try {
+            return await LeavesManagementService.handleFetchManagers(baseApiUrl, id);
+        } catch (e) {
+            throw new Error(e);
+        }
+    }
+
+    const resetLeaveDay = () => {
+        dispatch(resetLeaveState());
+        setTabValue(1);
+        setReloadKey(prevCount => prevCount + 1);
+    }
+
     useEffect(() => {
         fetchLeaveRequestData();
     }, [reloadKey, detailProfile])
 
     useEffect(() => {
     }, [tabValue]);
-
     //data table setup
     const columns = [
         {
             name: "userLeave",
-            label: 'Name',
+            label: intl.formatMessage(messages.name),
             options: {
                 filter: true,
-                ...TableOptionStyle(),
+                ...TableOptionStyle({minWidth: 150}),
                 customBodyRender: (value) => {
                     return value.user.name
                 },
@@ -82,7 +122,7 @@ const LeaveManagement = () => {
         },
         {
             name: "userLeave",
-            label: 'Overall Status',
+            label: intl.formatMessage(messages.overallStatus),
             options: {
                 filter: false,
                 sort: false,
@@ -93,33 +133,7 @@ const LeaveManagement = () => {
             },
         },
         {
-            name: "status",
-            label: 'Status',
-            options: {
-                filter: false,
-                sort: false,
-                ...TableOptionStyle(),
-                customBodyRender: (value) => {
-                    return <StatusChip status={value}/>;
-                },
-            },
-        },
-        {
-            name: "status",
-            label: 'Status',
-            options: {
-                filter: true,
-                viewColumns: false,
-                display: 'excluded',
-                ...TableOptionStyle(),
-                customBodyRender: (value) => {
-                    return value.status;
-                },
-            },
-        },
-        {
             name: "userLeave",
-            label: 'Overall Status',
             options: {
                 filter: true,
                 viewColumns: false,
@@ -132,7 +146,7 @@ const LeaveManagement = () => {
         },
         {
             name: 'userLeave',
-            label: 'Type',
+            label: intl.formatMessage(messages.type),
             options: {
                 filter: true,
                 ...TableOptionStyle(),
@@ -143,7 +157,7 @@ const LeaveManagement = () => {
         },
         {
             name: 'userLeave',
-            label: 'From Date',
+            label: intl.formatMessage(messages.from),
             options: {
                 filter: true,
                 ...TableOptionStyle(),
@@ -154,7 +168,7 @@ const LeaveManagement = () => {
         },
         {
             name: 'userLeave',
-            label: 'To Date',
+            label: intl.formatMessage(messages.to),
             options: {
                 filter: true,
                 ...TableOptionStyle(),
@@ -165,59 +179,51 @@ const LeaveManagement = () => {
         },
         {
             name: 'userLeave',
-            label: 'Reason',
+            label: intl.formatMessage(messages.reason),
             options: {
                 filter: false,
                 ...TableOptionStyle(),
                 customBodyRender: (value) => {
-                    return value.reason ?
-                        value.reason
-                        : 'No reason included...';
+                    return value.reason ? value.reason : 'No reason included...';
                 },
             }
         },
         {
             name: 'status',
-            label: 'Action',
+            label: intl.formatMessage(messages.action),
             options: {
                 download: false,
                 csv: false,
                 filter: false,
                 customBodyRender: (value, rowValue) => {
                     return (
-                        value === 'PENDING' &&
-                        <Box display={'flex'} gridColumnGap={8}>
-                            <Button
-                                onClick={() => {
-                                    requestDecision('APPROVED', rowValue.rowData[0].id)
-                                }}
-                                variant="contained"
-                                size='small'
-                                style={{
-                                    textTransform: 'capitalize',
-                                    lineHeight: '16px',
-                                    color: 'white',
-                                    backgroundColor: '#4CAF50',
-                                }}
-                            >
-                                Approve
-                            </Button>
-                            <Button
-                                onClick={() => {
-                                    requestDecision('REJECTED', rowValue.rowData[0].id)
-                                }}
-                                variant="contained"
-                                size='small'
-                                style={{
-                                    textTransform: 'capitalize',
-                                    lineHeight: '16px',
-                                    color: 'white',
-                                    backgroundColor: '#e65100',
-                                }}
-                            >
-                                Reject
-                            </Button>
-                        </Box>
+                        value === 'PENDING' ? (
+                            isLoading ? <CircularProgress/> :
+                                <Box display={'flex'} gridColumnGap={8}>
+                                    <Tooltip title={intl.formatMessage(messages.approve)} placement={"top"}>
+                                        <IconButton
+                                            onClick={() => {
+                                                requestDecision('APPROVED', rowValue.rowData[0].id)
+                                            }}
+                                            variant="contained"
+                                            size='small'
+                                        >
+                                            <Done/>
+                                        </IconButton>
+                                    </Tooltip>
+                                    <Tooltip title={intl.formatMessage(messages.reject)} placement={"top"}>
+                                        <IconButton
+                                            onClick={() => {
+                                                rejectDecision("REJECTED", rowValue.rowData[0].id)
+                                            }}
+                                            variant="contained"
+                                            size='small'
+                                        >
+                                            <Close/>
+                                        </IconButton>
+                                    </Tooltip>
+                                </Box>
+                        ) : null
                     )
                 },
             }
@@ -233,43 +239,81 @@ const LeaveManagement = () => {
                 <PapperBlock title="Leaves management"
                              whiteBg
                              icon="flight_takeoff"
-                             desc="This module allows admins and manager to manage leave requests."
+                             desc={intl.formatMessage(messages.title)}
                 >
                     <TabsNavigation tabItems={tabItems} tabValuePropsFromChild={handleTabValueProps}
                                     tabValuePropsFromParent={tabValue}></TabsNavigation>
                 </PapperBlock>
                 <Paper elevation={2}>
                     <TabPanel tabIndex={0} tabValue={tabValue}>
+                        {
+                            dayLeaves &&
+                            <Box p={2} display={'flex'} justifyContent={'flex-end'} gridGap={20}
+                                 alignItems={'baseline'}>
+                                <p>The leaves request is scheduled for <Typography component={'span'}
+                                                                                   color='primary'>{dayLeaves?.date}</Typography>
+                                </p>
+                                <Button onClick={() => resetLeaveDay()} variant='text' color='primary'>Reset</Button>
+                            </Box>
+                        }
                         <Box p={2}>
                             <MUIDataTable
-                                data={tableData}
+                                data={dayLeaves?.data ? dayLeaves.data : tableData}
                                 columns={columns}
                                 options={{
                                     ...TableOptionsSetup,
-                                    onCellClick : (colData, cellMeta) => {
+                                    onCellClick: async (colData, cellMeta) => {
                                         // action coll
-                                        if(cellMeta.colIndex === 9) {
+                                        if (cellMeta.colIndex >6) {
                                             return;
                                         }
-                                        const data = tableData[cellMeta.dataIndex]
+                                        const tableDataSet = dayLeaves?.data ? dayLeaves.data : tableData
+                                        const data = tableDataSet[cellMeta.dataIndex]
                                         if (!data)
                                             return;
-                                        Popup.create({
-                                            title: data.userLeave?.user?.name,
-                                            content: <EventInfoDialog eventInfo={data.userLeave} tabDefault={1}
-                                                                      requestDecision={requestDecision}/>,
-                                        });
+                                        try {
+                                            const response = await fetchLeavesManagers(data.userLeave.id);
+                                            const managersData = response.data;
+                                            setListManagers(managersData);
+
+                                            Popup.create({
+                                                title: intl.formatMessage(messages.popupTitle),
+                                                content: (
+                                                    <EventInfoDialog
+                                                        eventInfo={{
+                                                            //...data.userLeave,
+                                                            id: data.userLeave.id,
+                                                            status: data.status,
+                                                            overallStatus: data.userLeave.status,
+                                                            title: data.userLeave?.user?.name,
+                                                            start: data.userLeave?.fromDate,
+                                                            end: data.userLeave?.toDate,
+                                                            file: data.userLeave.attachedFiles,
+                                                            reason: data.userLeave.reason,
+                                                            managers: managersData
+                                                        }}
+                                                        tabDefault={0}
+                                                        requestDecision={requestDecision}
+                                                    />
+                                                ),
+                                            });
+                                    } catch (e) {
+                                            throw new Error(e)
+                                        }
                                     }
                                 }}
                             />
-                            <div>Total: &nbsp; {tableData.length}</div>
+                            <div>Total: &nbsp; {dayLeaves?.data ? dayLeaves.data.length : tableData.length}</div>
                         </Box>
                     </TabPanel>
 
-                    <TabPanel tabIndex={1} tabValue={tabValue} forceRender={forceRender}>
+                    <TabPanel tabIndex={1} tabValue={tabValue}>
                         <Box p={0}>
-                            <LeaveManagementCalendar baseApiUrl={baseApiUrl} id={detailProfile.id}
-                                                     requestDecision={requestDecision}/>
+                            <LeaveManagementCalendar baseApiUrl={baseApiUrl}
+                                                     id={detailProfile.id}
+                                                     requestDecision={requestDecision}
+                                                     handleTabValueProps={handleTabValueProps}
+                            />
                         </Box>
                     </TabPanel>
                 </Paper>
@@ -287,4 +331,4 @@ const LeaveManagement = () => {
     );
 }
 
-export default LeaveManagement;
+export default injectIntl(LeaveManagement);

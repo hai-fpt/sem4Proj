@@ -110,8 +110,7 @@ function Header(props) {
 
   const handleSignOutConfirm = async () => {
     setDialogOpen(false)
-    localStorage.removeItem('userDetail');
-    localStorage.removeItem('jwtToken');
+    localStorage.clear();
     setOpenNotification(true)
     setTimeout(() => {
       history.push('/');
@@ -148,7 +147,7 @@ function Header(props) {
           <Hidden smDown>
             <NavLink to="/app" className={classNames(classes.brand, classes.brandBar)}>
               <img src={logo} alt={brand.name} />
-              {brand.name}
+              {intl.formatMessage(messages.brandName)}
             </NavLink>
           </Hidden>
         </div>
@@ -219,19 +218,19 @@ function Header(props) {
               onClick={handleSignOut}
               >
               <ExitToAppIcon />
-            <Typography component={'strong'}>SIGN OUT</Typography>
+            <Typography component={'strong'}>{intl.formatMessage(messages.signOutButton)}</Typography>
           </Button>
         </div>
       </Toolbar>
       <WarningDialog open={dialogOpen}
-      dialogMessage={'Are you sure signing out?'}
+      dialogMessage={intl.formatMessage(messages.logoutConfirm)}
       onClose={handleSignOutCancel}
       onConfirm={handleSignOutConfirm}
       />
       <CustomNotification
         open={openNotification}
         close={() => {setOpenNotification(false)}}
-        notificationMessage={'Successfully sign out !'}
+        notificationMessage={intl.formatMessage(messages.logoutSuccess)}
         severity={'success'}
       />
     </AppBar>

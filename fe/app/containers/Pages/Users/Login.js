@@ -48,23 +48,19 @@ function Login(props) {
               <div className={classes.openingHead}>
                 <NavLink to="/" className={classes.brand}>
                   <img src={logo} alt={brand.name} />
-                  {brand.name}
+                  <FormattedMessage {...messages.brandName}/>
                 </NavLink>
               </div>
               <Typography variant="h3" component="h1" gutterBottom>
                 <FormattedMessage {...messages.welcomeTitle} />
                 &nbsp;
-                {brand.name}
+                <FormattedMessage {...messages.brandName}/>
               </Typography>
               <Typography variant="h6" component="p" className={classes.subpening}>
                 <FormattedMessage {...messages.welcomeSubtitle} />
               </Typography>
             </div>
             <div className={classes.openingFooter}>
-              <NavLink to="/" className={classes.back}>
-                <ArrowBack />
-                &nbsp;back to site
-              </NavLink>
               <div className={classes.lang}>
                 <SelectLanguage />
               </div>

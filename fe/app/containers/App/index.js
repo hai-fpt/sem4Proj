@@ -7,6 +7,7 @@ import { setDetailProfile } from 'enl-redux/actions/detailProfileActions'
 import NotFound from '../Pages/Standalone/NotFoundDedicated';
 import LoginDedicated from '../Pages/Standalone/LoginDedicated';
 import Application from './Application';
+import LeaveDetails from '../Pages/LeaveDetails'
 import ThemeWrapper from './ThemeWrapper';
 import { fetchProfile } from 'enl-api/user/myProfile';
 import axios from 'axios';
@@ -34,13 +35,14 @@ function App(props) {
   }, [dispatch]);
 
   useEffect(() => {
-    if (!localStorage.getItem('userDetail') && !localStorage.getItem('jwtToken')) {
+    if (!localStorage.getItem('userDetail') && !localStorage.getItem('jwtToken') && !window.location?.pathname?.startsWith("/leave-details")) {
       history.push('/');
       return;
     }
     const getDetailProfile = async () => {
       try {
         const detail = await fetchProfile(userDetail.id, envData.BASE_API_URL);
+        localStorage.setItem('userDetail', JSON.stringify(detail.data));
         if (envData.BASE_API_URL) {
           await dispatch(setDetailProfile(detail.data));
         }
@@ -59,6 +61,7 @@ function App(props) {
           <Switch>
             <Route path="/" exact component={LoginDedicated} />
             <Route path="/app" component={Application} />
+            <Route  path="/leave-details/:id" component={LeaveDetails} />
             <Route component={NotFound} />
           </Switch>
         </Router>

@@ -1,4 +1,6 @@
 import axios from 'axios';
+import {useIntl} from "react-intl";
+import messages from "enl-api/team/teamMessages"
 
 export const fetchTeam = async (baseApiUrl) => {
   try {
@@ -32,26 +34,59 @@ export const fetchTeamUserList = async (id, baseApiUrl) => {
   }
 };
 
-export const createTeam = async (data, baseApiUrl) => {
+export const createTeam = async (data, baseApiUrl, setNotificationSeverity, setNotificationMessage, setOpenNotification, handleTabValueProps) => {
+  const intl = useIntl();
   try {
-    return await axios.post(`${baseApiUrl}/api/admin/team`, data, );
+    const response = await axios.post(`${baseApiUrl}/api/admin/team`, data, );
+    if (response.status === 201) {
+      setNotificationSeverity('success');
+      setNotificationMessage(intl.formatMessage(messages.notificationCreateSuccessfully));
+      setOpenNotification(true);
+      handleTabValueProps(0);
+    }
+    return response;
   } catch (error) {
+    setNotificationSeverity('error');
+    setNotificationMessage(intl.formatMessage(messages.notificationCreateFail));
+    setOpenNotification(true);
     throw new Error(error);
   }
 };
 
-export const updateTeam = async (id, data, baseApiUrl) => {
+export const updateTeam = async (id, data, baseApiUrl, setNotificationSeverity, setNotificationMessage, setOpenNotification, handleTabValueProps) => {
+  const intl = useIntl();
   try {
-    return await axios.put(`${baseApiUrl}/api/admin/team/${id}`, data, );
+    const response = await axios.put(`${baseApiUrl}/api/admin/team/${id}`, data, );
+    if (response.status === 200) {
+      setNotificationSeverity('success');
+      setNotificationMessage(intl.formatMessage(messages.notificationCreateSuccessfully));
+      setOpenNotification(true);
+      handleTabValueProps(0);
+    }
+    return response;
   } catch (error) {
+    setNotificationSeverity('error');
+    setNotificationMessage(intl.formatMessage(messages.notificationCreateFail));
+    setOpenNotification(true);
     throw new Error(error);
   }
 };
 
-export const deleteTeam = async (id, baseApiUrl) => {
+export const deleteTeam = async (id, baseApiUrl, setNotificationSeverity, setNotificationMessage, setOpenNotification, setReloadKey) => {
+  const intl = useIntl();
   try {
-    return await axios.delete(`${baseApiUrl}/api/admin/team/${id}`, );
+    const response = await axios.delete(`${baseApiUrl}/api/admin/team/${id}`, );
+    if (response.status === 204) {
+      setNotificationSeverity('success');
+      setNotificationMessage(intl.formatMessage(messages.notificationDeleteSuccessfully));
+      setOpenNotification(true);
+      setReloadKey((prevCount) => prevCount + 1);
+    }
+    return response;
   } catch (error) {
+    setNotificationSeverity('error');
+    setNotificationMessage(intl.formatMessage(messages.notificationDeleteFail));
+    setOpenNotification(true);
     throw new Error(error);
   }
 };

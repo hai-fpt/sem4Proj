@@ -1,12 +1,20 @@
 import axios from "axios";
 
-export const fetchUsers = async (baseApiUrl) => {
+export const fetchUsersRole = async (baseApiUrl, userId) => {
     try {
-        return await axios.get(`${baseApiUrl}/api/user`)
+        return await axios.get(`${baseApiUrl}/api/user/role?id=${userId}`)
     } catch (error) {
         throw new Error(error);
     }
 };
+
+export const fetchUsers = async (baseApiUrl) => {
+    try {
+        return await axios.get(`${baseApiUrl}/api/user`);
+    } catch (error) {
+        throw new Error(error);
+    }
+}
 
 export const postUser = async (baseApiUrl, data) => {
     try {

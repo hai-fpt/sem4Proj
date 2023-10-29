@@ -10,14 +10,14 @@ module.exports = [
     key: "manage_leave",
     name: "Manage Leaves",
     icon: "view_stream",
-    link: "/app/pages/leave/manage",
+    link: "/app/pages/leave/leave management",
     roles: ['MANAGER']
   },
   {
     key: "apply_leave",
     name: "Apply Leave",
     icon: "view_list",
-    link: "/app/pages/leave/apply",
+    link: "/app/pages/leave/apply leave",
     roles: ['USER']
   },
   {

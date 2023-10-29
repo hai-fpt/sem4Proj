@@ -1,2 +1,4 @@
 export const SET_DEPARTMENT_DATA = 'SET_DEPARTMENT_DATA';
 export const SET_MANAGER_DATA = 'SET_MANAGER_DATA';
+export const SET_TEAM_DATA = 'SET_TEAM_DATA';
+

@@ -7,13 +7,17 @@ import {
     updateTeam
 } from "../../../api/team/teamApi";
 import {fetchUsers} from "../../../api/user/userApi";
+import {useIntl} from "react-intl";
+import messages from "enl-api/team/teamMessages"
+import {fetchDepartment} from "../../../api/department/department";
 
 
 const TeamService = {
     getTabItems: (detailFormData) => {
+        const intl = useIntl();
         return [
-          { label: 'List', index: 0 },
-          { label: detailFormData ? 'Update' : 'Create', index: 1 }
+            { label: intl.formatMessage(messages.list), index: 0 },
+            { label: detailFormData ? intl.formatMessage(messages.update) : intl.formatMessage(messages.create), index: 1 }
         ];
     },
 
@@ -56,13 +60,19 @@ const TeamService = {
                 type: 'text',
                 label: 'updated by',
                 field: 'updatedBy'
-            }, 
+            },
             description: {
                 disabled: false,
                 type: 'textarea',
                 label: 'description',
                 field: 'description'
-            }, 
+            },
+            department: {
+                disabled: false,
+                type: "select",
+                label: "department",
+                field: "department"
+            }
         };
         return dataSetup;
     },
@@ -85,7 +95,8 @@ const TeamService = {
             createdDate: filteredData[3],
             description: filteredData[4],
             members: userList,
-            updatedBy: filteredData[6]
+            updatedBy: filteredData[6],
+            department: filteredData[7].id
         }
         setFormData(teamObjectData);
         setDetailFormData(teamObjectData);
@@ -115,9 +126,9 @@ const TeamService = {
         }
     },
 
-    postTeam: async (data, baseApiUrl) => {
+    postTeam: async (data, baseApiUrl, setNotificationSeverity, setNotificationMessage, setOpenNotification, handleTabValueProps) => {
         try {
-            return await createTeam(data, baseApiUrl);
+            return await createTeam(data, baseApiUrl, setNotificationSeverity, setNotificationMessage, setOpenNotification, handleTabValueProps);
         } catch (error) {
             throw new Error(error);
         }
@@ -147,21 +158,29 @@ const TeamService = {
         }
     },
 
-    putTeam: async (id, data, baseApiUrl) => {
+    putTeam: async (id, data, baseApiUrl, setNotificationSeverity, setNotificationMessage, setOpenNotification, handleTabValueProps) => {
         try {
-            return await updateTeam(id, data, baseApiUrl);
+            return await updateTeam(id, data, baseApiUrl, setNotificationSeverity, setNotificationMessage, setOpenNotification, handleTabValueProps);
         } catch (error) {
             throw new Error(error);
         }
     },
 
-    deleteTeam: async (id, baseApiUrl) => {
+    deleteTeam: async (id, baseApiUrl, setNotificationSeverity, setNotificationMessage, setOpenNotification, setReloadKey) => {
         try {
-            return await deleteTeam(id, baseApiUrl);
+            return await deleteTeam(id, baseApiUrl, setNotificationSeverity, setNotificationMessage, setOpenNotification, setReloadKey);
         } catch (error) {
             throw new Error(error);
         }
     },
+
+    getDepartments : async (baseApiUrl) => {
+        try {
+            return await fetchDepartment(baseApiUrl);
+        } catch (error) {
+            throw new Error(error);
+        }
+    }
 };
 
 export default TeamService;

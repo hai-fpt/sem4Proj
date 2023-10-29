@@ -12,7 +12,7 @@ const flagIcon = {
   top: 1,
   background: `url(${flag}) no-repeat transparent`,
   backgroundSize: '16px auto',
-  '&[class="ar"]': {
+  '&[class="kr"]': {
     backgroundPosition: '0 3px'
   },
   '&[class="zh"]': {

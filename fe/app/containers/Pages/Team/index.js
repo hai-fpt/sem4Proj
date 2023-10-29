@@ -17,10 +17,12 @@ import Box from '@material-ui/core/Box';
 import MUIDataTable from 'mui-datatables';
 import TeamService from './TeamService'
 import {useDispatch, useSelector} from 'react-redux';
-import {setManager, setUsers} from "../../../redux/actions/teamActions";
+import {setDepartments, setManager, setUsers} from "../../../redux/actions/teamActions";
+import {injectIntl} from 'react-intl';
+import messages from "enl-api/team/teamMessages";
 
 
-const Team = () => {
+const Team = ({intl}) => {
   const dispatch = useDispatch();
   const formDataSetup = TeamService.formDataSetup();
   const [reloadKey, setReloadKey] = useState(0);
@@ -28,11 +30,12 @@ const Team = () => {
   const [formData, setFormData] = useState({
     teamName: '',
     manager: 0,
-    createdDate: '', 
-    description: '', 
+    createdDate: '',
+    description: '',
     userList: [],
-    updatedDate: '', 
-    updatedBy : ''
+    updatedDate: '',
+    updatedBy: '',
+    department: ''
   })
   const [detailFormData, setDetailFormData] = useState();
   const [forceRender, setForceRender] = useState(false);
@@ -44,6 +47,9 @@ const Team = () => {
   const userDetail = JSON.parse(localStorage.getItem('userDetail'));
   const manager = useSelector((state) => state.manager);
   const users = useSelector((state) => state.users);
+  const departments = useSelector((state) => state.department);
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationSeverity, setNotificationSeverity] = useState('');
 
   const handleTabValueProps = (propsFromChild) => {
     setTabValue(propsFromChild)
@@ -67,37 +73,38 @@ const Team = () => {
     return await TeamService.getUserList(id, baseApiUrl);
   };
 
-  const handleDeleteProcessing = (item) => {
-    deleteData(item[0]);
+  const handleDeleteProcessing = async (item) => {
+    await deleteData(item[0]);
   }
 
   const deleteData = async (id) => {
-    await TeamService.deleteTeam(id, baseApiUrl);
+    await TeamService.deleteTeam(id, baseApiUrl, setNotificationSeverity, setNotificationMessage, setOpenNotification, setReloadKey);
   };
 
   const postData = async () => {
-    await TeamService.postTeam(formData, baseApiUrl);
+    await TeamService.postTeam(formData, baseApiUrl, setNotificationSeverity, setNotificationMessage, setOpenNotification, handleTabValueProps);
   }
 
   const putData = async() => {
-    await TeamService.putTeam(formData.id, formData, baseApiUrl);
+    await TeamService.putTeam(formData.id, formData, baseApiUrl, setNotificationSeverity, setNotificationMessage, setOpenNotification, handleTabValueProps);
   }
 
-  const handleTeamFormSubmit = (e) => {
+  const handleTeamFormSubmit = async (e) => {
+    e.preventDefault();
     formData.updatedBy = userDetail.email;
     if (formData.id === undefined) {
-      postData();
+     await postData();
     } else {
-      putData();
+     await putData();
     }
-    TeamService.handleTeamFormSubmit(e, setOpenNotification, setReloadKey, handleTabValueProps);
+    // await TeamService.handleTeamFormSubmit(e, setOpenNotification, setReloadKey, handleTabValueProps);
   };
 
   const handleCancelEdit = (e) => {
-    TeamService.handleCancelEdit(e, 
-      setDetailFormData, 
-      setForceRender, 
-      setReloadKey, 
+    TeamService.handleCancelEdit(e,
+      setDetailFormData,
+      setForceRender,
+      setReloadKey,
       handleTabValueProps,
       detailFormData
     )
@@ -115,6 +122,15 @@ const Team = () => {
       }
     }
 
+    const fetchDepartmentData = async () => {
+      try {
+        const res = await TeamService.getDepartments(baseApiUrl);
+        dispatch(setDepartments(res))
+      } catch (error) {
+        throw new Error(error);
+      }
+    }
+
     let isMounted = true;
     const fetchData = async () => {
       const detail = await TeamService.getTeams(baseApiUrl);
@@ -124,7 +140,8 @@ const Team = () => {
     };
     fetchUserData();
     fetchData();
-  }, [formData, tabValue, detailFormData]);
+    fetchDepartmentData();
+  }, [formData, tabValue, detailFormData, reloadKey]);
 
   useEffect(() => {
     const fetchManagerData = async () => {
@@ -149,75 +166,77 @@ const Team = () => {
     },
     {
       name: "teamName",
-      label: "Team name",
+      label: intl.formatMessage(messages.name),
       options: {
         filter: true,
         ...TableOptionStyle(),
-      }
+      },
     },
     {
-      name: 'manager',
-      label: "Manager",
+      name: "manager",
+      label: intl.formatMessage(messages.manager),
       options: {
         filter: true,
         ...TableOptionStyle(),
-        customBodyRender: (value) => value.name
-      }
+        customBodyRender: (value) => value.name,
+      },
     },
     {
-      name: 'createdDate',
-      label: "Created Date",
+      name: "createdDate",
+      label: intl.formatMessage(messages.created),
       options: {
         filter: true,
         ...TableOptionStyle(),
         customBodyRender: (value) => {
           return TeamService.formatDate(value);
-        }
-      }
+        },
+      },
     },
     {
-      name: 'description',
-      label: "Description",
+      name: "description",
+      label: intl.formatMessage(messages.desc),
       options: {
         filter: true,
         customBodyRender: (value) => {
-          return (
-            value === '' ?
-            <p>No description</p>
-            :
-            <TruncateTypography text={value} component="p" />
-          )
+          return value === "" ? <p>{intl.formatMessage(messages.noDescription)}</p> : <TruncateTypography text={value} component="p" />;
         },
         ...TableOptionStyle(),
-      }
+      },
     },
     {
-      name: 'updatedDate',
-      label: "Updated Date",
+      name: "updatedDate",
       options: {
         filter: false,
         display: "excluded",
-      }
+      },
     },
     {
-      name: 'updatedBy',
-      label: "Updated By",
+      name: "updatedBy",
       options: {
         filter: false,
         display: "excluded",
-      }
+      },
     },
+    // {
+    //   name: "department",
+    //   label: "Department",
+    //   options: {
+    //     customBodyRender: (value) => {
+    //       return value.name;
+    //     }
+    //   }
+    // },
     {
-      name: 'action',
+      name: "action",
+      label: intl.formatMessage(messages.action),
       options: {
         download: false,
         csv: false,
         filter: false,
         customBodyRender: (_, rowValue) => {
-          return (
-            <DataTableDropdownMenu delete edit ItemValue={rowValue} editProcessing={handleEditProcessing} deleteProcessing={handleDeleteProcessing}></DataTableDropdownMenu>
-        )},
-      }
+          return <DataTableDropdownMenu delete edit ItemValue={rowValue} editProcessing={handleEditProcessing} deleteProcessing={handleDeleteProcessing}></DataTableDropdownMenu>;
+        },
+      },
     },
   ];
 
@@ -228,9 +247,9 @@ const Team = () => {
           <title>Team management</title>
         </Helmet>
         <PapperBlock
-          whiteBg 
-          icon="supervisor_account" 
-          desc="This module allows admins to view and update team."
+          whiteBg
+          icon="supervisor_account"
+          desc={intl.formatMessage(messages.title)}
         >
           <TabsNavigation tabItems={tabItems} tabValuePropsFromChild={handleTabValueProps} tabValuePropsFromParent={tabValue}></TabsNavigation>
         </PapperBlock>
@@ -249,34 +268,95 @@ const Team = () => {
           <TabPanel tabIndex={1} tabValue={tabValue} forceRender={forceRender}>
             <Box p={3}>
               <form onSubmit={handleTeamFormSubmit}>
-                <Box p={2} display="grid" 
+                <Box p={2} display="grid"
                     gridTemplateColumns={['1fr', 'repeat(2, 1fr)']} // Responsive grid columns
                     gridRowGap={6} // Gap between rows
                     gridColumnGap={16} // Gap between columns
                 >
-                  <CustomFormElement detailFormData={detailFormData} valueFormProps={handleFormValueProps} field={'teamName'} label={'team name'} isRequired formElementType='text' />
-                  <CustomFormElement detailFormData={detailFormData} valueFormProps={handleFormValueProps} field={'manager'} label={'manager'} isRequired formElementType='manager_select' />
-                  <CustomFormElement detailFormData={detailFormData} valueFormProps={handleFormValueProps} field={'createdDate'} label={'created date'} formElementType='today_date' disabled/>
-                  <CustomFormElement detailFormData={detailFormData} valueFormProps={handleFormValueProps} field={'updatedDate'} label={'updated date'} formElementType='today_date' disabled/>
-                  <CustomFormElement detailFormData={detailFormData} valueFormProps={handleFormValueProps} field={'members'} label={'members'} formElementType='multi_select_users' />
-                  <CustomFormElement detailFormData={detailFormData} valueFormProps={handleFormValueProps} field={'updatedBy'} label={'updated by'} formElementType='text' disabled/>
-                  <CustomFormElement detailFormData={detailFormData} valueFormProps={handleFormValueProps} field={'description'} label={'description'} formElementType='textarea' />
-                </Box>
+                  <CustomFormElement
+                      detailFormData={detailFormData}
+                      valueFormProps={handleFormValueProps}
+                      field={'teamName'}
+                      label={intl.formatMessage(messages.name)}
+                      isRequired
+                      formElementType='text'
+                  />
+
+                  <CustomFormElement
+                      detailFormData={detailFormData}
+                      valueFormProps={handleFormValueProps}
+                      field={'manager'}
+                      label={intl.formatMessage(messages.manager)}
+                      isRequired
+                      formElementType='manager_select'
+                  />
+
+                  <CustomFormElement
+                    detailFormData={detailFormData}
+                    valueFormProps={handleFormValueProps}
+                    field={'department'}
+                    label={"Department"}
+                    isRequired
+                    formElementType={"select_department"}
+                    />
+
+                  <CustomFormElement
+                      detailFormData={detailFormData}
+                      valueFormProps={handleFormValueProps}
+                      field={'createdDate'}
+                      label={intl.formatMessage(messages.create)}
+                      formElementType='today_date'
+                      disabled
+                  />
+
+                  <CustomFormElement
+                      detailFormData={detailFormData}
+                      valueFormProps={handleFormValueProps}
+                      field={'updatedDate'}
+                      label={intl.formatMessage(messages.update)}
+                      formElementType='today_date'
+                      disabled
+                  />
+
+                  <CustomFormElement
+                      detailFormData={detailFormData}
+                      valueFormProps={handleFormValueProps}
+                      field={'members'}
+                      label={intl.formatMessage(messages.members)}
+                      formElementType='multi_select_users'
+                  />
+
+                  {/*<CustomFormElement*/}
+                  {/*    detailFormData={detailFormData}*/}
+                  {/*    valueFormProps={handleFormValueProps}*/}
+                  {/*    field={'updatedBy'}*/}
+                  {/*    label={intl.formatMessage(messages.updatedBy)}*/}
+                  {/*    formElementType='text'*/}
+                  {/*    disabled*/}
+                  {/*/>*/}
+
+                  <CustomFormElement
+                      detailFormData={detailFormData}
+                      valueFormProps={handleFormValueProps}
+                      field={'description'}
+                      label={intl.formatMessage(messages.desc)}
+                      formElementType='textarea'
+                  /></Box>
                 <ButtonGroup detail={detailFormData} handleCancelEdit={handleCancelEdit}></ButtonGroup>
               </form>
             </Box>
           </TabPanel>
         </Paper>
-        
+
       </div>
       <CustomNotification
           open={openNotification}
           close={() => {setOpenNotification(false)}}
-          notificationMessage={'Great! A team was created successfully.'}
-          severity={'success'}
+          notificationMessage={notificationMessage}
+          severity={notificationSeverity}
       />
     </>
   );
 }
 
-export default Team;
+export default injectIntl(Team);

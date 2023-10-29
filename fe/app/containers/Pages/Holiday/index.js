@@ -21,9 +21,11 @@ import { useSelector } from 'react-redux';
 import { fetchVerify } from 'enl-api/holidays/holiday';
 import {putHoliday, postHoliday, deleteHoliday} from "../../../api/holidays/holiday";
 import moment from "moment";
+import {injectIntl} from 'react-intl';
+import messages from "enl-api/holidays/holidayMessages";
 
 
-const Holiday = () => {
+const Holiday = ({intl}) => {
   const [reloadKey, setReloadKey] = useState(0);
   const [tabValue, setTabValue] = useState(0);
   const [formData, setFormData] = useState({
@@ -36,7 +38,7 @@ const Holiday = () => {
   const [forceRender, setForceRender] = useState(false);
   const [openNotification, setOpenNotification] = useState(false);
   const tabItems = holidayService.getTabItems(detailFormData);
-  const [data, setData] = useState();
+  const [data, setData] = useState([]);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationSeverity, setNotificationSeverity] = useState('');
 
@@ -59,14 +61,14 @@ const Holiday = () => {
     holidayService.handleEditProcessing(item, handleTabValueProps, setDetailFormData, setFormData);
   }
 
-  const handleHolidayFormSubmit = (e) => {
+  const handleHolidayFormSubmit = async (e) => {
     e.preventDefault();
     const { id } = formData;
     if (id === undefined) {
-      handlePostHoliday();
+      await handlePostHoliday();
     }
     if (id !== undefined) {
-      handlePutHoliday();
+      await handlePutHoliday();
     }
   }
 
@@ -78,7 +80,7 @@ const Holiday = () => {
       toDate: moment(formData.toDate).format('YYYY-MM-DD HH:mm:ss'),
       description: formData.description,
     };
-    await putHoliday(baseApiUrl, id, body, setNotificationMessage, setOpenNotification, handleTabValueProps, setNotificationSeverity);
+    await putHoliday(baseApiUrl, id, body, setNotificationMessage, setOpenNotification, handleTabValueProps, setNotificationSeverity, intl);
   };
 
   const handlePostHoliday = async () => {
@@ -88,7 +90,7 @@ const Holiday = () => {
       toDate: moment(formData.toDate).format('YYYY-MM-DD HH:mm:ss'),
       description: formData.description,
     };
-    await postHoliday(baseApiUrl, body, setNotificationMessage, setOpenNotification, handleTabValueProps, setNotificationSeverity);
+    await postHoliday(baseApiUrl, body, setNotificationMessage, setOpenNotification, handleTabValueProps, setNotificationSeverity, intl);
   };
   const handleCancelEdit = (e) => {
     holidayService.handleCancelEdit(e,
@@ -102,7 +104,7 @@ const Holiday = () => {
 
   const handleDeleteProcessing = async (value) => {
     const id = value[0]
-    await deleteHoliday(baseApiUrl, id, setNotificationMessage, setOpenNotification, setNotificationSeverity, setReloadKey)
+    await deleteHoliday(baseApiUrl, id, setNotificationMessage, setOpenNotification, setNotificationSeverity, setReloadKey, intl)
   }
 
   const baseApiUrl = useSelector(state => state.env.BASE_API_URL);
@@ -121,6 +123,7 @@ const Holiday = () => {
     },
     {
       name: "name",
+      label: intl.formatMessage(messages.name),
       options: {
         filter: true,
         ...TableOptionStyle(),
@@ -128,6 +131,7 @@ const Holiday = () => {
     },
     {
       name: 'fromDate',
+      label: intl.formatMessage(messages.from),
       options: {
         filter: true,
         ...TableOptionStyle(),
@@ -138,6 +142,7 @@ const Holiday = () => {
     },
     {
       name: 'toDate',
+      label: intl.formatMessage(messages.to),
       options: {
         filter: true,
         ...TableOptionStyle(),
@@ -148,6 +153,7 @@ const Holiday = () => {
     },
     {
       name: 'description',
+      label: intl.formatMessage(messages.desc),
       options: {
         filter: true,
         customBodyRender: (value) => (
@@ -158,6 +164,7 @@ const Holiday = () => {
     },
     {
       name: 'Action',
+      label: intl.formatMessage(messages.action),
       options: {
         download: false,
         csv: false,
@@ -180,7 +187,7 @@ const Holiday = () => {
           <PapperBlock title="Holidays"
                        whiteBg
                        icon="local_airport"
-                       desc="This module allows admins to view and update holidays."
+                       desc={intl.formatMessage(messages.title)}
           >
             <TabsNavigation tabItems={tabItems} tabValuePropsFromChild={handleTabValueProps} tabValuePropsFromParent={tabValue}></TabsNavigation>
           </PapperBlock>
@@ -192,16 +199,16 @@ const Holiday = () => {
                     columns={columns}
                     options={TableOptionsSetup}
                 />
-                {/* <div>Total: &nbsp; {data.length}</div> */}
+                 <div>Total: &nbsp; {data.length}</div>
               </Box>
             </TabPanel>
 
             <TabPanel tabIndex={1} tabValue={tabValue} forceRender={forceRender}>
               <Box p={3}>
                 <form onSubmit={handleHolidayFormSubmit}>
-                  <CustomFormElement detailFormData={detailFormData} valueFormProps={handleFormValueProps} field={'name'} label={'Name'} isRequired formElementType='text' />
-                  <DateRangePicker detailFormData={detailFormData} valueFormProps={handleFormValueProps} fromDateisRequired toDateisRequired />
-                  <CustomFormElement detailFormData={detailFormData} valueFormProps={handleFormValueProps} field={'description'} label={'Description'} formElementType='textarea' />
+                  <CustomFormElement detailFormData={detailFormData} valueFormProps={handleFormValueProps} field={'name'} label={intl.formatMessage(messages.name)} isRequired formElementType='text' />
+                  <DateRangePicker detailFormData={detailFormData} valueFormProps={handleFormValueProps} fromDateisRequired toDateisRequired  />
+                  <CustomFormElement detailFormData={detailFormData} valueFormProps={handleFormValueProps} field={'description'} label={intl.formatMessage(messages.desc)} formElementType='textarea' />
                   <ButtonGroup detail={detailFormData} handleCancelEdit={handleCancelEdit}></ButtonGroup>
                 </form>
               </Box>
@@ -218,4 +225,4 @@ const Holiday = () => {
   );
 }
 
-export default Holiday;
+export default injectIntl(Holiday);

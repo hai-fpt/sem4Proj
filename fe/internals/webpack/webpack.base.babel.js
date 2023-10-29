@@ -5,7 +5,6 @@
 const path = require('path');
 const webpack = require('webpack');
 
-const ESLintPlugin = require('eslint-webpack-plugin');
 const HappyPack = require('happypack');
 const happyThreadPool = HappyPack.ThreadPool({ size: 5 });
 
@@ -184,14 +183,6 @@ module.exports = options => ({
       You can enable it to maintain and keep clean your code.
       NOTE: By enable eslint running app process at beginning will slower
     */
-    new ESLintPlugin({
-      extensions: 'js',
-      exclude: 'node_modules',
-      failOnWarning: true,
-      failOnError: true,
-      emitError: true,
-      emitWarning: true,
-    }),
     new webpack.ProvidePlugin({
       process: 'process/browser'
     }),

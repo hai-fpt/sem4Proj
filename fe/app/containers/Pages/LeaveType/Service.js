@@ -1,8 +1,13 @@
+import {useIntl} from "react-intl";
+import messages from "enl-api/leaveType/leaveTypeMessages";
+
+
 const Service = {
     getTabItems: (detailFormData) => {
+        const intl = useIntl();
         return [
-            { label: 'List', index: 0 },
-            { label: detailFormData ? 'Update' : 'Create', index: 1 }
+            { label: intl.formatMessage(messages.list), index: 0 },
+            { label: detailFormData ? intl.formatMessage(messages.update) : intl.formatMessage(messages.create), index: 1 }
         ];
     },
 
@@ -32,15 +37,15 @@ const Service = {
     handleEditProcessing: (item, handleTabValueProps, setDetailFormData, setFormData) => {
         const filteredData = item.filter((value) => value !== undefined);
         const [id, name, affectsDaysOff, description] = filteredData;
-        const holidayObjectData = {
+        const leaveObjectData = {
             id,
             name,
             affectsDaysOff,
             description,
         };
         handleTabValueProps(1);
-        setDetailFormData(holidayObjectData)
-        setFormData(holidayObjectData);
+        setDetailFormData(leaveObjectData)
+        setFormData(leaveObjectData);
     },
 };
 

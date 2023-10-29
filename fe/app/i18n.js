@@ -9,14 +9,12 @@
  */
 
 const enTranslationMessages = require('./translations/en.json');
-const arTranslationMessages = require('./translations/ar.json');
 
 const DEFAULT_LOCALE = 'en';
 
-// prettier-ignore
+// prettier-ignoreKorea
 const appLocales = [
-  'en',
-  'ar'
+  'en'
 ];
 
 const formatTranslationMessages = (locale, messages) => {
@@ -33,8 +31,7 @@ const formatTranslationMessages = (locale, messages) => {
 };
 
 const translationMessages = {
-  en: formatTranslationMessages('en', enTranslationMessages),
-  ar: formatTranslationMessages('ar', arTranslationMessages)
+  en: formatTranslationMessages('en', enTranslationMessages)
 };
 
 exports.appLocales = appLocales;

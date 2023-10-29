@@ -5,8 +5,9 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogActions from '@material-ui/core/DialogActions';
 import Button from '@material-ui/core/Button';
-
-function WarningDialog({ open, onClose, onConfirm, dialogMessage }) {
+import {injectIntl} from 'react-intl'
+import messages from "./messages";
+function WarningDialog({ open, onClose, onConfirm, dialogMessage ,intl}) {
   const handleClose = () => {
     onClose();
   };
@@ -18,16 +19,16 @@ function WarningDialog({ open, onClose, onConfirm, dialogMessage }) {
 
   return (
     <Dialog open={open} onClose={handleClose}>
-      <DialogTitle>Warning</DialogTitle>
+      <DialogTitle>{intl.formatMessage(messages.title)}</DialogTitle>
       <DialogContent>
         {dialogMessage}
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose} color="primary">
-          Close
+            {intl.formatMessage(messages.close)}
         </Button>
         <Button onClick={handleConfirm} color="primary" autoFocus>
-          Confirm
+            {intl.formatMessage(messages.confirm)}
         </Button>
       </DialogActions>
     </Dialog>
@@ -41,4 +42,4 @@ WarningDialog.propTypes = {
   dialogMessage: PropTypes.any.isRequired,
 };
 
-export default WarningDialog;
+export default injectIntl(WarningDialog)

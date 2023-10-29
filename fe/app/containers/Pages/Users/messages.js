@@ -24,4 +24,12 @@ export default defineMessages({
     id: `${scope}.Greeting.subtitle`,
     defaultMessage: 'Just register to join with us',
   },
+  backToSite: {
+    id: `${scope}.Login.back`,
+    defaultMessage: "back to site"
+  },
+  brandName: {
+    id: `${scope}.Login.name`,
+    defaultMessage: "Leave Management"
+  }
 });

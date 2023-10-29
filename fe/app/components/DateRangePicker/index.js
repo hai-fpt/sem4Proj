@@ -11,6 +11,8 @@ import {
 } from '@material-ui/pickers';
 import IconButton from '@material-ui/core/IconButton';
 import CalendarTodayIcon from '@material-ui/icons/CalendarToday';
+import {injectIntl} from 'react-intl';
+import messages from "enl-api/holidays/holidayMessages";
 
 const useStyles = makeStyles({
     datePicker: {
@@ -37,6 +39,7 @@ const useStyles = makeStyles({
 });
 
 const DateRangePicker = (props) => {
+    const {intl} = props;
     const classes = useStyles();
     const [fromDate, setFromDate] = useState(new Date());
     const [toDate, setToDate] = useState(new Date());
@@ -73,7 +76,7 @@ const DateRangePicker = (props) => {
             <Grid container spacing={2}>
                 <Grid item xs={12} md={6} xl={6} className={classes.datePicker}>
                     <Typography className={classes.typo}>
-                        From date
+                        {intl.formatMessage(messages.from)}
                         {
                             fromDateisRequired && (
                                 <span className={classes.requiredElement}>
@@ -102,7 +105,7 @@ const DateRangePicker = (props) => {
                 </Grid>
                 <Grid item xs={12} md={6} xl={6} className={classes.datePicker}>
                     <Typography className={classes.typo}>
-                        To date
+                        {intl.formatMessage(messages.to)}
                         {
                             toDateisRequired && (
                                 <span className={classes.requiredElement}>
@@ -146,4 +149,4 @@ DateRangePicker.defaultProps = {
     fromDateisRequired: false,
   };
 
-export default DateRangePicker;
+export default injectIntl(DateRangePicker);

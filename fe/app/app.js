@@ -43,7 +43,7 @@ const MOUNT_NODE = document.getElementById("app");
 
 axiosInterceptors();
 const render = (messages) => {
-  ReactDOM.render(
+    ReactDOM.render(
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
           <LanguageProvider messages={messages}>

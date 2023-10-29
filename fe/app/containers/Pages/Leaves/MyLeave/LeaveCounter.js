@@ -6,6 +6,8 @@ import Paper from '@material-ui/core/Paper';
 import { makeStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import { fetchLeave } from 'enl-api/myleave/leaveTool';
+import {injectIntl} from 'react-intl';
+import messages from "enl-api/myleave/myLeaveMessages";
 
 const useStyles = makeStyles({
     paperLeaveCounter: {
@@ -53,6 +55,7 @@ const useStyles = makeStyles({
 });
 
 const LeaveCounter = (props) => {
+    const {intl} = props;
     const classes = useStyles();
     const [selectedYear, setSelectedYear] = useState(props.year)
     const [leaveDayLeft, setLeaveDayLeft] = useState(0);
@@ -137,22 +140,22 @@ const LeaveCounter = (props) => {
                     thickness={1} // Adjust the thickness of the circular progress indicator
                 />
                 <Typography variant="h6" component="div" className={classes.leaveCounterLabel} style={{position: 'absolute'}}>
-                    You have
+                    {intl.formatMessage(messages.daysOffLeftFirst)}
                     <span>{displayDayLeftValue}</span>
-                    day(s) off left.
+                    {intl.formatMessage(messages.daysOffLeftSecond)}
                 </Typography>
             </Box>
             <Box px={4} py={2} display={'grid'} gridGap={10}>
                 <Box display={'flex'} justifyContent={'start'} alignItems={'center'} gridGap={'8px'}>
                     <div className={classes.totalLeaveDaysChip}></div>
                     <Typography>
-                        Total day(s) off: &nbsp; {totalLeaveDays}
+                        {intl.formatMessage(messages.totalDaysOff)}: &nbsp; {totalLeaveDays}
                     </Typography>
                 </Box>
                 <Box display={'flex'} justifyContent={'start'} alignItems={'center'} gridGap={'8px'}>
                     <div className={classes.usedLeaveDaysChip}></div>
                     <Typography>
-                        Total used day(s): &nbsp; {totalLeaveDays - displayDayLeftValue}
+                        {intl.formatMessage(messages.totalUsedDays)}: &nbsp; {totalLeaveDays - displayDayLeftValue}
                     </Typography>
                 </Box>
             </Box>
@@ -160,4 +163,4 @@ const LeaveCounter = (props) => {
     );
 };
 
-export default LeaveCounter;
+export default injectIntl(LeaveCounter);

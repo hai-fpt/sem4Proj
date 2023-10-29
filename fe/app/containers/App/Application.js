@@ -39,8 +39,8 @@ function Application(props) {
         <Route path="/app/pages/user/profile" component={UserProfile} />
         <Route path="/app/pages/add/user" component={Form} />
         <Route path="/app/pages/import/user" component={DashboardPage} />
-        <Route path="/app/pages/leave/manage" component={LeaveManagement} />
-        <Route path="/app/pages/leave/apply" component={ApplyLeave} />
+        <Route path="/app/pages/leave/leave management" component={LeaveManagement} />
+        <Route path="/app/pages/leave/apply leave" component={ApplyLeave} />
 
         {/* System information */}
         <Route path="/app/pages/holidays" component={Holiday}/>

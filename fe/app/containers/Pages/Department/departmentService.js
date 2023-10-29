@@ -1,8 +1,12 @@
+import {useIntl} from "react-intl";
+import messages from "enl-api/department/departmentMessages";
+
 const departmentService = {
     getTabItems: (detailFormData) => {
+        const intl = useIntl();
         return [
-            { label: 'List', index: 0 },
-            { label: detailFormData ? 'Update' : 'Create', index: 1 }
+            { label: intl.formatMessage(messages.list), index: 0 },
+            { label: detailFormData ? intl.formatMessage(messages.update) : intl.formatMessage(messages.create), index: 1 }
         ];
     },
 
@@ -31,15 +35,17 @@ const departmentService = {
 
     handleEditProcessing: (item, handleTabValueProps, setDetailFormData, setFormData) => {
         const filteredData = item.filter((value) => value !== undefined);
-        const [id, name, manager] = filteredData;
-        const holidayObjectData = {
+        const [id, name, team, manager] = filteredData;
+        const teamId = team.map(team => team.id)
+        const departmentObjectData = {
             id: id,
             name: name,
+            team: teamId,
             manager: manager.id,
         };
         handleTabValueProps(1);
-        setDetailFormData(holidayObjectData);
-        setFormData(holidayObjectData);
+        setDetailFormData(departmentObjectData);
+        setFormData(departmentObjectData);
     },
 };
 

@@ -17,8 +17,10 @@ import MUIDataTable from 'mui-datatables';
 import rolesService from './RolesService';
 import Grid from '@material-ui/core/Grid';
 import {useSelector} from "react-redux";
+import {injectIntl} from 'react-intl';
+import messages from "enl-api/role/roleMessages";
 
-const Role = () => {
+const Role = ({intl}) => {
   const [reloadKey, setReloadKey] = useState(0);
   const [tabValue, setTabValue] = useState(0);
   const [formData, setFormData] = useState({
@@ -84,7 +86,7 @@ const Role = () => {
   const columns = [
     {
       name: "name",
-      label: "Role's name",
+      label: intl.formatMessage(messages.name),
       options: {
         filter: true,
         ...TableOptionStyle(),
@@ -92,7 +94,7 @@ const Role = () => {
     },
     {
         name: 'description',
-        label: "Description",
+        label: intl.formatMessage(messages.desc),
         options: {
           filter: true,
           customBodyRender: (value) => {
@@ -128,7 +130,7 @@ const Role = () => {
         <PapperBlock title="Roles"
           whiteBg
           icon="works"
-          desc="This module allows admins view the roles."
+          desc={intl.formatMessage(messages.title)}
         >
           {/*<TabsNavigation tabItems={tabItems} tabValuePropsFromChild={handleTabValueProps} tabValuePropsFromParent={tabValue}></TabsNavigation>*/}
         </PapperBlock>
@@ -171,4 +173,4 @@ const Role = () => {
   );
 }
 
-export default Role;
+export default injectIntl(Role);

@@ -1,10 +1,13 @@
-import { fetchLeaves, fetchLeavesMothly, leaveDecision } from "enl-api/LeaveManagement/index"
+import {fetchLeaves, fetchLeavesMothly, leaveDecision, fetchLeavesManagers} from "enl-api/LeaveManagement/index"
+import {useIntl} from "react-intl";
+import messages from "enl-api/leaveManagement/manageLeaveMessages";
 
 const UsersService = {
     getTabItems: () => {
+        const intl = useIntl();
         return [
-          { label: 'List', index: 0 },
-          { label:  'Calendar', index: 1 },
+          { label: intl.formatMessage(messages.list), index: 0 },
+          { label:  intl.formatMessage(messages.calendar), index: 1 },
         ];
     },
 
@@ -24,15 +27,23 @@ const UsersService = {
         }
     },
 
-    handleDecision: async (apiUrl, status, requestID, managerID, manager, setReloadKey) => {
+    handleDecision: async (apiUrl, status, requestID, managerID, rejectReason, manager, setReloadKey) => {
         try {
-            const res = await leaveDecision(apiUrl, status, requestID, managerID, manager)
+            const res = await leaveDecision(apiUrl, status, requestID, managerID, manager, rejectReason)
             await setReloadKey(prevCount => prevCount + 1)
             return res;
         } catch (error) {
             throw Error(error)
         }
     },
+
+    handleFetchManagers: async (apiUrl, requestId) => {
+        try {
+            return await fetchLeavesManagers(apiUrl, requestId);
+        } catch (error) {
+            throw Error(error);
+        }
+    }
 };
 
 export default UsersService;

@@ -1,0 +1,3 @@
+export const SET_DAY_LEAVE = 'SET_DAY_LEAVE';
+export const RESET_LEAVE_STATE = "RESET_LEAVE_STATE";
+

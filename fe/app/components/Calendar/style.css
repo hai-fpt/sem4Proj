@@ -68,19 +68,19 @@ body {
 
 /* Dylan edition */
 .status.APPROVED{
-    color: #4CAF50;
+    color: #03a9f4;
 }
 .status.REJECTED{
-    color: #e65100;
+    color: #0398db;
 }
 .status.PENDING{
-    color: #ffc107;
+    color: #47c4fd;
 }
-.status.CANCELED{
-    color: #bdbdbd;
+.status.CANCELLED{
+    color: #0275a8;
 }
 .event-label{
-    width: 100px;
+    width: 120px;
     color: #03a9f4;
     display: block;
     font-weight: 600;
@@ -110,5 +110,15 @@ body {
 .decision-button .reject:hover{
     color: white;
     background-color: #f35804;
+}
+
+.decision-button .cancel {
+    color: white;
+    background-color: #808080;
+}
+
+.decision-button .cancel:hover {
+    color: white;
+    background-color: #A0A0A0;
 }
 

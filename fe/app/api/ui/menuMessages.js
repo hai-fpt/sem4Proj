@@ -104,4 +104,78 @@ export default defineMessages({
     id: `${scope}.sub_menu_2`,
     defaultMessage: 'Sub Menu 2',
   },
+  mange_user: {
+    id: `${scope}.menu.mange_user`,
+    defaultMessage: 'Manage Users',
+  },
+  manage_leave: {
+    id: `${scope}.menu.manage_leave`,
+    defaultMessage: 'Manage Leaves',
+  },
+  apply_leave: {
+    id: `${scope}.menu.apply_leave`,
+    defaultMessage: 'Apply Leaves',
+  },
+  my_leave: {
+    id: `${scope}.menu.my_leave`,
+    defaultMessage: 'My Leaves',
+  },
+  my_profile: {
+    id: `${scope}.menu.my_profile`,
+    defaultMessage: 'My Profile',
+  },
+  system_information: {
+    id: `${scope}.menu.system_information`,
+    defaultMessage: 'System Infomation',
+  },
+  holiday_list: {
+    id: `${scope}.menu.holiday_list`,
+    defaultMessage: 'Holidays',
+  },
+  team: {
+    id: `${scope}.menu.team`,
+    defaultMessage: 'Group/Team',
+  },
+  roles: {
+    id: `${scope}.menu.roles`,
+    defaultMessage: 'Roles',
+  },
+  leave_type: {
+    id: `${scope}.menu.leave_type`,
+    defaultMessage: 'Leave type',
+  },
+  department: {
+    id: `${scope}.menu.department`,
+    defaultMessage: 'Department',
+  },
+  users: {
+    id: `${scope}.header.users`,
+    defaultMessage: "Users"
+  },
+  leaveManagement: {
+    id: `${scope}.header.leaveManagement`,
+    defaultMessage: "Users"
+  },
+  applyLeave: {
+    id: `${scope}.header.applyLeave`,
+    defaultMessage: "Users"
+  },
+  myLeave: {
+    id: `${scope}.header.myLeave`,
+    defaultMessage: "Users"
+  },
+  profile: {
+    id: `${scope}.header.profile`,
+    defaultMessage: "Users"
+  },
+  holidays: {
+    id: `${scope}.header.holidays`,
+    defaultMessage: "Users"
+  },
+  leaveType: {
+    id: `${scope}.header.leaveType`,
+    defaultMessage: "Users"
+  }
+
+
 });

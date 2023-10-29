@@ -19,6 +19,7 @@ import departmentReducer from "./modules/departmentReducer";
 import managerReducer from "./modules/managerReducers";
 import userReducer from "./modules/userReducers";
 import applyLeaveApiReducer from "./modules/applyLeaveApiReducer";
+import leaveManageReducer from "./modules/leaveManageReducer"
 
 /**
  * Creates the main reducer with the dynamically injected ones
@@ -37,6 +38,7 @@ export default function createReducer(injectedReducers = {}) {
     department: departmentReducer,
     manager: managerReducer,
     users: userReducer,
+    manageLeaves:  leaveManageReducer,
     applyLeaveApi: applyLeaveApiReducer,
     detailProfile: detailProfileReducer,
     ...injectedReducers,

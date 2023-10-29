@@ -19,8 +19,10 @@ import Service from "./Service";
 import Grid from "@material-ui/core/Grid";
 import {putLeave, postLeave, fetchVerify, deleteLeave} from "../../../api/leaveType/leaveType";
 import { useSelector } from "react-redux";
+import {injectIntl} from 'react-intl';
+import messages from "enl-api/leaveType/leaveTypeMessages";
 
-const Leave = () => {
+const Leave = ({intl}) => {
   const [reloadKey, setReloadKey] = useState(0);
   const [tabValue, setTabValue] = useState(0);
   const [formData, setFormData] = useState({
@@ -32,8 +34,10 @@ const Leave = () => {
   const [forceRender, setForceRender] = useState(false);
   const [openNotification, setOpenNotification] = useState(false);
   const tabItems = Service.getTabItems(detailFormData);
-  const [data, setData] = useState();
+  const [data, setData] = useState([]);
   const baseApiUrl = useSelector((state) => state.env.BASE_API_URL);
+  const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationSeverity, setNotificationSeverity] = useState('');
 
   const handleTabValueProps = (propsFromChild) => {
     setTabValue(propsFromChild);
@@ -46,10 +50,7 @@ const Leave = () => {
       affectsDaysOff: Service.checkAffectsDaysOff(formData.affectsDaysOff),
       description: formData.description,
     };
-    await putLeave(baseApiUrl, id, body);
-    setOpenNotification(true);
-    setReloadKey((prevCount) => prevCount + 1);
-    handleTabValueProps(0);
+    await putLeave(baseApiUrl, id, body, setOpenNotification, handleTabValueProps, setNotificationMessage, setNotificationSeverity, intl);
   };
 
   const handlePostLeave = async () => {
@@ -58,10 +59,7 @@ const Leave = () => {
       affectsDaysOff: Service.checkAffectsDaysOff(formData.affectsDaysOff),
       description: formData.description,
     };
-    await postLeave(baseApiUrl, body);
-    setOpenNotification(true);
-    setReloadKey((prevCount) => prevCount + 1);
-    handleTabValueProps(0);
+    await postLeave(baseApiUrl, body, setOpenNotification, handleTabValueProps, setNotificationMessage, setNotificationSeverity, intl);
   };
 
   const handleFormValueProps = (data, field) => {
@@ -80,14 +78,14 @@ const Leave = () => {
     );
   };
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     const { id } = formData;
     if (id === undefined) {
-      handlePostLeave();
+      await handlePostLeave();
     }
     if (id !== undefined) {
-      handlePutLeave();
+      await handlePutLeave();
     }
   };
 
@@ -104,12 +102,12 @@ const Leave = () => {
 
   const handleDeleteProcessing = async (value) => {
     const id = value[0]
-    await deleteLeave(baseApiUrl, id)
+    await deleteLeave(baseApiUrl, id, setOpenNotification, setNotificationMessage, setNotificationSeverity, setReloadKey, intl)
   }
 
   useEffect(async () => {
     setData(await fetchVerify(baseApiUrl));
-  }, [formData, tabValue, detailFormData]);
+  }, [ tabValue, reloadKey]);
 
   //data table setup
   const columns = [
@@ -126,16 +124,18 @@ const Leave = () => {
       options: {
         filter: true,
         ...TableOptionStyle(),
+        label: intl.formatMessage(messages.name),
       },
     },
     {
       name: "affectsDaysOff",
       options: {
         filter: true,
-        customBodyRender: value => {
-          return Service.formatAffectsDaysOff(value)
+        customBodyRender: (value) => {
+          return Service.formatAffectsDaysOff(value);
         },
         ...TableOptionStyle(),
+        label: intl.formatMessage(messages.affect),
       },
     },
     {
@@ -143,9 +143,10 @@ const Leave = () => {
       options: {
         filter: true,
         customBodyRender: (value) => (
-            <TruncateTypography text={value} component={"p"} />
+            <TruncateTypography text={value === null ? '' : value} component={"p"} />
         ),
         ...TableOptionStyle(),
+        label: intl.formatMessage(messages.desc),
       },
     },
     {
@@ -165,17 +166,11 @@ const Leave = () => {
               ></DataTableDropdownMenu>
           );
         },
+        label: intl.formatMessage(messages.action),
       },
     },
   ];
-  // const data = [
-  //   ["just a leave type", 'just a description'],
-  //   ["just a leave type", 'just a description'],
-  //   ["just a leave type", 'just a description'],
-  //   ["just a leave type", 'just a description'],
-  //   ["just a leave type", 'just a description'],
-  //   ["just a leave type", 'just a description']
-  // ];
+
 
   return (
       <>
@@ -186,8 +181,8 @@ const Leave = () => {
           <PapperBlock
               title="Leave type"
               whiteBg
-              icon="works"
-              desc="This module allows admins to create, view and update leave type."
+              icon="insert_chart"
+              desc={intl.formatMessage(messages.title)}
           >
             <TabsNavigation
                 tabItems={tabItems}
@@ -203,7 +198,7 @@ const Leave = () => {
                     columns={columns}
                     options={TableOptionsSetup}
                 />
-                {/* <div>Total: &nbsp; {data.length}</div> */}
+                 <div>Total: &nbsp; {data.length}</div>
               </Box>
             </TabPanel>
 
@@ -216,7 +211,7 @@ const Leave = () => {
                           detailFormData={detailFormData}
                           valueFormProps={handleFormValueProps}
                           field={"name"}
-                          label={"Name"}
+                          label={intl.formatMessage(messages.name)}
                           isRequired
                           formElementType="text"
                       />
@@ -226,7 +221,7 @@ const Leave = () => {
                         detailFormData={detailFormData}
                         valueFormProps={handleFormValueProps}
                         field={"affectsDaysOff"}
-                        label={"Affects Days Off"}
+                        label={intl.formatMessage(messages.affect)}
                         isRequired
                         formElementType="selectAffectsDaysOff"
                       />
@@ -236,7 +231,7 @@ const Leave = () => {
                           detailFormData={detailFormData}
                           valueFormProps={handleFormValueProps}
                           field={"description"}
-                          label={"Description"}
+                          label={intl.formatMessage(messages.desc)}
                           formElementType="textarea"
                       />
                     </Grid>
@@ -255,11 +250,11 @@ const Leave = () => {
             close={() => {
               setOpenNotification(false);
             }}
-            notificationMessage={"Great! a leave type was created successfully."}
-            severity={"success"}
+            notificationMessage={notificationMessage}
+            severity={notificationSeverity}
         />
       </>
   );
 };
 
-export default Leave;
+export default injectIntl(Leave);

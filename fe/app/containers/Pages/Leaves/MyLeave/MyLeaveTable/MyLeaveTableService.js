@@ -25,7 +25,6 @@ const MyLeaveTableService = {
     },
 
     handleEditProcessing: (item, handleTabValueProps, setDetailFormData) => {
-        console.log(item);
         handleTabValueProps(1);
         setDetailFormData(item);
     },
@@ -38,17 +37,33 @@ const MyLeaveTableService = {
         }
     },
 
-    putCancel: async (apiUrl, id, email, setReloadKey) => {
+    putCancel: async (apiUrl, id, email, setReloadKey, setIsLoading) => {
         try {
-            await axios.put(`${apiUrl}/api/user_leave/cancel`, {
+            const res = await axios.put(`${apiUrl}/api/user_leave/cancel`, {
                 "id": id,
                 "updatedBy": email
             })
+            await setIsLoading(false)
+            await setReloadKey(prevCount => prevCount + 1);
+            return res;
         } catch (error) {
             throw Error(error)
         }
-        await setReloadKey(prevCount => prevCount + 1);
-    }
+
+    },
+    postAttachment: async (attachment, id, updatedBy, baseApiUrl) => {
+        try {
+            const formData = new FormData();
+            for (let i = 0; i < attachment.length; i++) {
+                formData.append('files', attachment[i]);
+            }
+            formData.append('requestId', id);
+            formData.append('updatedBy', updatedBy);
+            return await axios.post(`${baseApiUrl}/api/file/upload`, formData)
+        } catch (error) {
+            throw new Error(error)
+        }
+    },
 };
 
 export default MyLeaveTableService;

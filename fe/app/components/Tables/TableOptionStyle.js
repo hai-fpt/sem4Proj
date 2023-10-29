@@ -1,9 +1,10 @@
-const baseTableStyleOptions = () => {
+const baseTableStyleOptions = (params) => {
     return {
       setCellProps: () => {
         return {
           style: {
             padding: 8,
+            ...params
           },
         };
       },
@@ -11,6 +12,7 @@ const baseTableStyleOptions = () => {
         return {
           style: {
             padding: 8,
+            ...params
           },
         };
       },

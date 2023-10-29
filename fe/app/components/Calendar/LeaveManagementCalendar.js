@@ -6,12 +6,17 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import "./style.css";
 import "./popup.css";
 import EventInfoDialog from "./EventInfoDialog";
-import {fetchLeavesMothly} from "enl-api/LeaveManagement/index"
-
+import {fetchLeavesMothly, fetchLeavesDaily} from "enl-api/LeaveManagement/index"
+import { useDispatch } from 'react-redux';
+import {setDayLeave} from 'enl-redux/actions/leaveManageActions';
+import {injectIntl, useIntl} from 'react-intl';
+import messages from "enl-api/leaveManagement/manageLeaveMessages";
 
 const localizer = momentLocalizer(moment);
 
-const LeaveManagementCalendar = ({baseApiUrl, id, requestDecision}) => {
+const LeaveManagementCalendar = ({baseApiUrl, id, requestDecision, handleTabValueProps}) => {
+    const dispatch = useDispatch();
+    const intl = useIntl();
     const [currentMonthView, setCurrentMonthView] = useState(moment().format('MM'));
     const [currentYearView, setCurrentYearView] = useState(moment().format('YYYY'));
     const [formedLeaves, setFormedLeaves] = useState([]);
@@ -30,7 +35,10 @@ const LeaveManagementCalendar = ({baseApiUrl, id, requestDecision}) => {
                 title: obj.userLeave.user.name,
                 start: new Date(obj.userLeave.fromDate),
                 end: new Date(obj.userLeave.toDate),
-                status: obj.userLeave.status,
+                status : obj.status,
+                reason : obj.userLeave.reason,
+                overallStatus: obj.userLeave.status,
+                file: obj.userLeave.attachedFiles,
             }));
             setFormedLeaves(reFormedLeave);
         } catch (error) {
@@ -45,43 +53,25 @@ const LeaveManagementCalendar = ({baseApiUrl, id, requestDecision}) => {
 
     const onSelectEventHandler = (leaveInfo) => {
         Popup.create({
-            title: leaveInfo.title,
+            title: intl.formatMessage(messages.title),
             content: <EventInfoDialog eventInfo={leaveInfo} requestDecision={requestDecision}/>,
         });
     };
 
 
-    const onSelectEventSlotHandler = (leaveInfo) => {
-        console.log(leaveInfo);
-        const data = {
-            start: leaveInfo.start,
-            end: leaveInfo.end,
-        };
-        openPopupForm(data);
-    };
-
-    const openPopupForm = (leaveInfo) => {
-        const leaveInfo1 = {...leaveInfo};
-        let newEvent = false;
-        let popupTitle = "Update Event";
-
-        if (!leaveInfo.hasOwnProperty("id")) {
-            leaveInfo1.id = moment().format("x");
-            leaveInfo1.title = null;
-            leaveInfo1.location = null;
-            popupTitle = "Request for leave";
-            newEvent = true;
+    const onSelectEventSlotHandler = async (leaveInfo) => {
+        try {
+            const res = await fetchLeavesDaily(baseApiUrl, id, moment(leaveInfo.start).format("YYYY-MM-DD HH:mm:ss"))
+            if (res.data.content.length !== 0) {
+                handleTabValueProps(0)
+                await dispatch(setDayLeave({data:  res.data.content, date: moment(leaveInfo.start).format("YYYY-MM-DD dddd")}));
+            }
+        } catch (error) {
+            throw Error(error);
         }
-
-        Popup.create({
-            title: popupTitle,
-            content: (
-                <div></div>
-            ),
-        });
     };
 
-    const eventStyleGetter = (event, start, end, isSelected) => {
+    const eventStyleGetter = (event) => {
         let background = 'transparent';
 
         switch (event.status) {
@@ -94,7 +84,7 @@ const LeaveManagementCalendar = ({baseApiUrl, id, requestDecision}) => {
             case 'PENDING':
                 background = '#ffc107';
                 break;
-            case 'CANCELED':
+            case 'CANCELLED':
                 background = '#bdbdbd';
                 break;
             default:

@@ -1,16 +1,19 @@
 import React from 'react';
 import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
+import {injectIntl} from 'react-intl';
+import messages from './buttonMessage';
+
 
 const ButtonGroup = (props) => {
-  const {detail, handleCancelEdit} = props;
+  const {detail, handleCancelEdit, intl} = props;
 
   return (
     <Box display={'flex'} justifyContent={'flex-end'} marginTop={12} gridGap={12}>
         {
             detail && (
                 <Button type='submit' variant="contained" size="large" color="primary">
-                    Update
+                    {intl.formatMessage(messages.update)}
                 </Button>
             )
         }
@@ -21,10 +24,10 @@ const ButtonGroup = (props) => {
             size="large" 
             color={detail ? 'secondary' : 'primary'}
         >
-                { detail ? 'Cancel' : 'Create'}
+                { detail ? intl.formatMessage(messages.cancel) : intl.formatMessage(messages.create)}
         </Button>
     </Box>
   );
 }
 
-export default ButtonGroup;
+export default injectIntl(ButtonGroup);

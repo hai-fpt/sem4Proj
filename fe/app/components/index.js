@@ -40,3 +40,4 @@ export ErrorWrap from './Error/ErrorWrap';
 export Calendar from './Calendar/Calendar';
 export LeaveManagementCalendar from './Calendar/LeaveManagementCalendar';
 export Loading from './Loading';
+export EventInfoDialog from './Calendar/EventInfoDialog.js';
